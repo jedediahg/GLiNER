@@ -1146,8 +1146,8 @@ data-aria-dark="Switch to auto color mode">
 </span><span data-line="943"><span class="sd">            input_ids: Label token IDs of shape (batch_size, seq_len).</span>
 </span><span data-line="944"><span class="sd">            attention_mask: Attention mask of shape (batch_size, seq_len).</span>
 </span><span data-line="945"><span class="sd">            *args: Additional positional arguments.</span>
-</span><span data-line="946"><span class="sd">            **kwargs: Additional keyword arguments (packing_config and pair_attention_mask</span>
-</span><span data-line="947"><span class="sd">                are removed as they&#39;re not supported for labels).</span>
+</span><span data-line="946"><span class="sd">            **kwargs: Additional keyword arguments (packing_config, pair_attention_mask</span>
+</span><span data-line="947"><span class="sd">                and token_lengths are removed as they&#39;re not supported for labels).</span>
 </span><span data-line="948">
 </span><span data-line="949"><span class="sd">        Returns:</span>
 </span><span data-line="950"><span class="sd">            Pooled label embeddings of shape (batch_size, hidden_size).</span>
@@ -1155,47 +1155,52 @@ data-aria-dark="Switch to auto color mode">
 </span><span data-line="952">        <span class="n">label_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
 </span><span data-line="953">        <span class="n">label_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;packing_config&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 </span><span data-line="954">        <span class="n">label_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;pair_attention_mask&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-</span><span data-line="955">        <span class="n">label_kwargs</span><span class="p">[</span><span class="s2">&quot;attention_mask&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attention_mask</span>
-</span><span data-line="956">        <span class="n">labels_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels_encoder</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">label_kwargs</span><span class="p">)</span>
-</span><span data-line="957">        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;labels_projection&quot;</span><span class="p">):</span>
-</span><span data-line="958">            <span class="n">labels_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels_projection</span><span class="p">(</span><span class="n">labels_embeddings</span><span class="p">)</span>
-</span><span data-line="959">        <span class="n">labels_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_pooling</span><span class="p">(</span><span class="n">labels_embeddings</span><span class="p">,</span> <span class="n">attention_mask</span><span class="p">)</span>
-</span><span data-line="960">        <span class="k">return</span> <span class="n">labels_embeddings</span></div>
+</span><span data-line="955">        <span class="c1"># token_lengths carries precomputed lengths for the *text* inputs (see</span>
+</span><span data-line="956">        <span class="c1"># collator); forwarding it to the labels encoder crashes plain HF</span>
+</span><span data-line="957">        <span class="c1"># backbones (&quot;BertModel.forward() got an unexpected keyword argument</span>
+</span><span data-line="958">        <span class="c1"># &#39;token_lengths&#39;&quot;, #370).</span>
+</span><span data-line="959">        <span class="n">label_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;token_lengths&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+</span><span data-line="960">        <span class="n">label_kwargs</span><span class="p">[</span><span class="s2">&quot;attention_mask&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attention_mask</span>
+</span><span data-line="961">        <span class="n">labels_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels_encoder</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">label_kwargs</span><span class="p">)</span>
+</span><span data-line="962">        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;labels_projection&quot;</span><span class="p">):</span>
+</span><span data-line="963">            <span class="n">labels_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels_projection</span><span class="p">(</span><span class="n">labels_embeddings</span><span class="p">)</span>
+</span><span data-line="964">        <span class="n">labels_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_pooling</span><span class="p">(</span><span class="n">labels_embeddings</span><span class="p">,</span> <span class="n">attention_mask</span><span class="p">)</span>
+</span><span data-line="965">        <span class="k">return</span> <span class="n">labels_embeddings</span></div>
 
-</span><span data-line="961">
+</span><span data-line="966">
 <div class="viewcode-block" id="BiEncoder.forward">
 <a class="viewcode-back" href="../../../api/gliner.modeling.encoder.html#gliner.modeling.encoder.BiEncoder.forward">[docs]</a>
-</span><span data-line="962">    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
-</span><span data-line="963">        <span class="bp">self</span><span class="p">,</span>
-</span><span data-line="964">        <span class="n">input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
-</span><span data-line="965">        <span class="n">attention_mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
-</span><span data-line="966">        <span class="n">labels_input_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span data-line="967">        <span class="n">labels_attention_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span data-line="968">        <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-</span><span data-line="969">        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-</span><span data-line="970">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
-</span><span data-line="971"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward pass through the bi-encoder.</span>
-</span><span data-line="972">
-</span><span data-line="973"><span class="sd">        Encodes both text sequences (token-level) and label sequences (pooled) to</span>
-</span><span data-line="974"><span class="sd">        produce aligned representations.</span>
-</span><span data-line="975">
-</span><span data-line="976"><span class="sd">        Args:</span>
-</span><span data-line="977"><span class="sd">            input_ids: Text token IDs of shape (batch_size, seq_len).</span>
-</span><span data-line="978"><span class="sd">            attention_mask: Text attention mask of shape (batch_size, seq_len).</span>
-</span><span data-line="979"><span class="sd">            labels_input_ids: Label token IDs of shape (batch_size, label_seq_len).</span>
-</span><span data-line="980"><span class="sd">            labels_attention_mask: Label attention mask of shape (batch_size, label_seq_len).</span>
-</span><span data-line="981"><span class="sd">            *args: Additional positional arguments.</span>
-</span><span data-line="982"><span class="sd">            **kwargs: Additional keyword arguments.</span>
-</span><span data-line="983">
-</span><span data-line="984"><span class="sd">        Returns:</span>
-</span><span data-line="985"><span class="sd">            A tuple containing:</span>
-</span><span data-line="986"><span class="sd">                - token_embeddings: Text embeddings of shape (batch_size, seq_len, hidden_size).</span>
-</span><span data-line="987"><span class="sd">                - labels_embeddings: Pooled label embeddings of shape (batch_size, hidden_size).</span>
-</span><span data-line="988"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span data-line="989">        <span class="n">token_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode_text</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">attention_mask</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-</span><span data-line="990">
-</span><span data-line="991">        <span class="n">labels_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode_labels</span><span class="p">(</span><span class="n">labels_input_ids</span><span class="p">,</span> <span class="n">labels_attention_mask</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-</span><span data-line="992">        <span class="k">return</span> <span class="n">token_embeddings</span><span class="p">,</span> <span class="n">labels_embeddings</span></div>
+</span><span data-line="967">    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+</span><span data-line="968">        <span class="bp">self</span><span class="p">,</span>
+</span><span data-line="969">        <span class="n">input_ids</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+</span><span data-line="970">        <span class="n">attention_mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+</span><span data-line="971">        <span class="n">labels_input_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span data-line="972">        <span class="n">labels_attention_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span data-line="973">        <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+</span><span data-line="974">        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+</span><span data-line="975">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+</span><span data-line="976"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward pass through the bi-encoder.</span>
+</span><span data-line="977">
+</span><span data-line="978"><span class="sd">        Encodes both text sequences (token-level) and label sequences (pooled) to</span>
+</span><span data-line="979"><span class="sd">        produce aligned representations.</span>
+</span><span data-line="980">
+</span><span data-line="981"><span class="sd">        Args:</span>
+</span><span data-line="982"><span class="sd">            input_ids: Text token IDs of shape (batch_size, seq_len).</span>
+</span><span data-line="983"><span class="sd">            attention_mask: Text attention mask of shape (batch_size, seq_len).</span>
+</span><span data-line="984"><span class="sd">            labels_input_ids: Label token IDs of shape (batch_size, label_seq_len).</span>
+</span><span data-line="985"><span class="sd">            labels_attention_mask: Label attention mask of shape (batch_size, label_seq_len).</span>
+</span><span data-line="986"><span class="sd">            *args: Additional positional arguments.</span>
+</span><span data-line="987"><span class="sd">            **kwargs: Additional keyword arguments.</span>
+</span><span data-line="988">
+</span><span data-line="989"><span class="sd">        Returns:</span>
+</span><span data-line="990"><span class="sd">            A tuple containing:</span>
+</span><span data-line="991"><span class="sd">                - token_embeddings: Text embeddings of shape (batch_size, seq_len, hidden_size).</span>
+</span><span data-line="992"><span class="sd">                - labels_embeddings: Pooled label embeddings of shape (batch_size, hidden_size).</span>
+</span><span data-line="993"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span data-line="994">        <span class="n">token_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode_text</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">attention_mask</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span data-line="995">
+</span><span data-line="996">        <span class="n">labels_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode_labels</span><span class="p">(</span><span class="n">labels_input_ids</span><span class="p">,</span> <span class="n">labels_attention_mask</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span data-line="997">        <span class="k">return</span> <span class="n">token_embeddings</span><span class="p">,</span> <span class="n">labels_embeddings</span></div>
 </div>
 
 </span></pre></div>
