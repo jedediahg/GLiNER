@@ -155,6 +155,7 @@ data-aria-dark="Switch to auto color mode">
 <li><a class="reference internal" href="#gliner.model.BaseGLiNER.quantize"><code class="docutils literal notranslate">quantize()</span></code></a></li>
 <li><a class="reference internal" href="#gliner.model.BaseGLiNER.prepare_state_dict"><code class="docutils literal notranslate">prepare_state_dict()</span></code></a></li>
 <li><a class="reference internal" href="#gliner.model.BaseGLiNER.save_pretrained"><code class="docutils literal notranslate">save_pretrained()</span></code></a></li>
+<li><a class="reference internal" href="#gliner.model.BaseGLiNER.validate_special_token_config"><code class="docutils literal notranslate">validate_special_token_config()</span></code></a></li>
 <li><a class="reference internal" href="#gliner.model.BaseGLiNER.load_from_config"><code class="docutils literal notranslate">load_from_config()</span></code></a></li>
 <li><a class="reference internal" href="#gliner.model.BaseGLiNER.from_pretrained"><code class="docutils literal notranslate">from_pretrained()</span></code></a></li>
 <li><a class="reference internal" href="#gliner.model.BaseGLiNER.export_to_onnx"><code class="docutils literal notranslate">export_to_onnx()</span></code></a></li>
@@ -550,6 +551,29 @@ with models fine-tuned with quantization-aware training (QAT).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.model.BaseGLiNER.validate_special_token_config">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_special_token_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/model.html#BaseGLiNER.validate_special_token_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.model.BaseGLiNER.validate_special_token_config" title="Link to this definition">¶</a></dt>
+<dd><p>Validate explicit <code class="docutils literal notranslate"><span class="pre">class_token_index</span></code>/<code class="docutils literal notranslate"><span class="pre">vocab_size</span></code> against the tokenizer.</p>
+<p>When these values are hardcoded in the config, GLiNER trusts them and does
+not add its special tokens (<code class="docutils literal notranslate"><span class="pre">ent_token</span></code>, <code class="docutils literal notranslate"><span class="pre">sep_token</span></code>). If the tokenizer
+does not actually contain those tokens, the class-token mask never matches
+and training proceeds with <code class="docutils literal notranslate"><span class="pre">loss=0</span></code> without any error (see issue #332).
+This check fails fast with actionable guidance instead.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config_instance</strong> – Model configuration with explicit special-token indices.</p></li>
+<li><p><strong>tokenizer</strong> – The transformer tokenizer that will be used by the model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">class_token_index</span></code> is out of range for the tokenizer,
+    or if <code class="docutils literal notranslate"><span class="pre">ent_token</span></code> is missing from the tokenizer vocabulary.</p>
 </dd>
 </dl>
 </dd></dl>
