@@ -59,16 +59,20 @@ data-aria-dark="Switch to auto color mode">
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction to 👑 GLiNER</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../instalation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input_limits.html">Input limits and truncation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">Advanced Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../streaming.html">StreamingSpan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../configs.html">Components &amp; Configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../training.html">Training</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architectures.html">Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../add_custom_architecture.html">Creating Custom GLiNER Architectures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../convert_to_onnx.html">ONNX Export &amp; Deployment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../serving.html">Serving</a></li>
 </ul>
 <p class="caption" role="heading" aria-level="3"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="gliner.model.html">gliner.model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gliner.streaming.html">gliner.streaming module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gliner.config.html">gliner.config module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gliner.training.html">gliner.training package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="gliner.training.trainer.html">gliner.training.trainer module</a></li>
@@ -81,6 +85,8 @@ data-aria-dark="Switch to auto color mode">
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.base.html">gliner.modeling.base module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gliner.modeling.cache.html">gliner.modeling.cache module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gliner.modeling.context_encoders.html">gliner.modeling.context_encoders module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.decoder.html">gliner.modeling.decoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.encoder.html">gliner.modeling.encoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.layers.html">gliner.modeling.layers module</a></li>
@@ -148,6 +154,26 @@ data-aria-dark="Switch to auto color mode">
 <li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERBaseOutput.span_mask"><code class="docutils literal notranslate">span_mask</span></code></a></li>
 <li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERBaseOutput.span_logits"><code class="docutils literal notranslate">span_logits</span></code></a></li>
 <li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERBaseOutput.__init__"><code class="docutils literal notranslate">__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERRepresentationOutput"><code class="docutils literal notranslate"><span class="pre">GLiNERRepresentationOutput</span></code></a><ul>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.prompts_embedding"><code class="docutils literal notranslate">prompts_embedding</span></code></a></li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.prompts_embedding_mask"><code class="docutils literal notranslate">prompts_embedding_mask</span></code></a></li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.words_embedding"><code class="docutils literal notranslate">words_embedding</span></code></a></li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.mask"><code class="docutils literal notranslate">mask</span></code></a></li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.past_key_values"><code class="docutils literal notranslate">past_key_values</span></code></a></li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.past_word_embeddings"><code class="docutils literal notranslate">past_word_embeddings</span></code></a></li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.past_word_mask"><code class="docutils literal notranslate">past_word_mask</span></code></a></li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.__init__"><code class="docutils literal notranslate">__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput"><code class="docutils literal notranslate"><span class="pre">GLiNERStreamingSpanOutput</span></code></a><ul>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput.past_key_values"><code class="docutils literal notranslate">past_key_values</span></code></a></li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput.past_word_embeddings"><code class="docutils literal notranslate">past_word_embeddings</span></code></a></li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput.past_word_mask"><code class="docutils literal notranslate">past_word_mask</span></code></a></li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput.cached_prompts_embedding"><code class="docutils literal notranslate">cached_prompts_embedding</span></code></a></li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput.cached_prompts_mask"><code class="docutils literal notranslate">cached_prompts_mask</span></code></a></li>
+<li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput.__init__"><code class="docutils literal notranslate">__init__()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#gliner.modeling.outputs.GLiNERDecoderOutput"><code class="docutils literal notranslate"><span class="pre">GLiNERDecoderOutput</span></code></a><ul>
@@ -356,6 +382,98 @@ Shape: [batch_size, seq_len].</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERBaseOutput.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompts_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompts_embedding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">words_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_logits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gliner.modeling.outputs.GLiNERBaseOutput.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERRepresentationOutput">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gliner.modeling.outputs.</span></span><span class="sig-name descname"><span class="pre">GLiNERRepresentationOutput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompts_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompts_embedding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">words_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">past_key_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">past_word_embeddings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">past_word_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/modeling/outputs.html#GLiNERRepresentationOutput"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.modeling.outputs.GLiNERRepresentationOutput" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelOutput</span></code></p>
+<p>Intermediate prompt and text representations produced by GLiNER backbones.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERRepresentationOutput.prompts_embedding">
+<span class="sig-name descname"><span class="pre">prompts_embedding</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">FloatTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.prompts_embedding" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERRepresentationOutput.prompts_embedding_mask">
+<span class="sig-name descname"><span class="pre">prompts_embedding_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">LongTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.prompts_embedding_mask" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERRepresentationOutput.words_embedding">
+<span class="sig-name descname"><span class="pre">words_embedding</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">FloatTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.words_embedding" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERRepresentationOutput.mask">
+<span class="sig-name descname"><span class="pre">mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">LongTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.mask" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERRepresentationOutput.past_key_values">
+<span class="sig-name descname"><span class="pre">past_key_values</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.past_key_values" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERRepresentationOutput.past_word_embeddings">
+<span class="sig-name descname"><span class="pre">past_word_embeddings</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">FloatTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.past_word_embeddings" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERRepresentationOutput.past_word_mask">
+<span class="sig-name descname"><span class="pre">past_word_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">LongTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.past_word_mask" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERRepresentationOutput.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompts_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompts_embedding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">words_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">past_key_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">past_word_embeddings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">past_word_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gliner.modeling.outputs.GLiNERRepresentationOutput.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERStreamingSpanOutput">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gliner.modeling.outputs.</span></span><span class="sig-name descname"><span class="pre">GLiNERStreamingSpanOutput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompts_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompts_embedding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">words_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_logits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">past_key_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">past_word_embeddings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">past_word_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cached_prompts_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cached_prompts_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/modeling/outputs.html#GLiNERStreamingSpanOutput"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#gliner.modeling.outputs.GLiNERBaseOutput" title="gliner.modeling.outputs.GLiNERBaseOutput"><code class="xref py py-class docutils literal notranslate"><span class="pre">GLiNERBaseOutput</span></code></a></p>
+<p>Span-classification output with reusable decoder and word cache state.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERStreamingSpanOutput.past_key_values">
+<span class="sig-name descname"><span class="pre">past_key_values</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput.past_key_values" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERStreamingSpanOutput.past_word_embeddings">
+<span class="sig-name descname"><span class="pre">past_word_embeddings</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">FloatTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput.past_word_embeddings" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERStreamingSpanOutput.past_word_mask">
+<span class="sig-name descname"><span class="pre">past_word_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">LongTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput.past_word_mask" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERStreamingSpanOutput.cached_prompts_embedding">
+<span class="sig-name descname"><span class="pre">cached_prompts_embedding</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">FloatTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput.cached_prompts_embedding" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERStreamingSpanOutput.cached_prompts_mask">
+<span class="sig-name descname"><span class="pre">cached_prompts_mask</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">LongTensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput.cached_prompts_mask" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.modeling.outputs.GLiNERStreamingSpanOutput.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompts_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompts_embedding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">words_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_logits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">past_key_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">past_word_embeddings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">past_word_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cached_prompts_embedding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cached_prompts_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#gliner.modeling.outputs.GLiNERStreamingSpanOutput.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 </dl>
 </dd></dl>

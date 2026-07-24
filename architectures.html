@@ -2,7 +2,7 @@
 <html lang="en" data-accent-color="violet" data-content_root="./">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Architectures - Home 0.2.24 documentation</title><link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="ONNX Export &amp; Deployment" href="convert_to_onnx.html" /><link rel="prev" title="Training" href="training.html" /><script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Architectures - Home 0.2.24 documentation</title><link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Creating Custom GLiNER Architectures" href="add_custom_architecture.html" /><link rel="prev" title="Training" href="training.html" /><script>
     function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
     setColorMode(localStorage._theme||"auto");
   </script><link rel="stylesheet" type="text/css" href="_static/pygments.css?v=e1a1ceaf" />
@@ -59,16 +59,20 @@ data-aria-dark="Switch to auto color mode">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction to 👑 GLiNER</a></li>
 <li class="toctree-l1"><a class="reference internal" href="instalation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input_limits.html">Input limits and truncation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Advanced Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="streaming.html">StreamingSpan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configs.html">Components &amp; Configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="training.html">Training</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="add_custom_architecture.html">Creating Custom GLiNER Architectures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="convert_to_onnx.html">ONNX Export &amp; Deployment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="serving.html">Serving</a></li>
 </ul>
 <p class="caption" role="heading" aria-level="3"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/gliner.model.html">gliner.model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/gliner.streaming.html">gliner.streaming module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gliner.config.html">gliner.config module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gliner.training.html">gliner.training package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/gliner.training.trainer.html">gliner.training.trainer module</a></li>
@@ -81,6 +85,8 @@ data-aria-dark="Switch to auto color mode">
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="api/gliner.modeling.base.html">gliner.modeling.base module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gliner.modeling.cache.html">gliner.modeling.cache module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gliner.modeling.context_encoders.html">gliner.modeling.context_encoders module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/gliner.modeling.decoder.html">gliner.modeling.decoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/gliner.modeling.encoder.html">gliner.modeling.encoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/gliner.modeling.layers.html">gliner.modeling.layers module</a></li>
@@ -189,6 +195,14 @@ data-aria-dark="Switch to auto color mode">
 <li><a class="reference internal" href="#id15">Output Format</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#gliner-streamingspan">GLiNER StreamingSpan</a><ul>
+<li><a class="reference internal" href="#cold-pass-prompt-and-first-chunk">Cold pass: prompt and first chunk</a></li>
+<li><a class="reference internal" href="#warm-pass-append-and-reuse">Warm pass: append and reuse</a></li>
+<li><a class="reference internal" href="#rolling-span-representations-and-scores">Rolling span representations and scores</a></li>
+<li><a class="reference internal" href="#training">Training</a></li>
+<li><a class="reference internal" href="#decoding-and-output-semantics">Decoding and output semantics</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#choosing-the-right-architecture">Choosing the Right Architecture</a><ul>
 <li><a class="reference internal" href="#decision-flowchart">Decision Flowchart</a></li>
 </ul>
@@ -295,10 +309,22 @@ data-aria-dark="Switch to auto color mode">
 <td><p>Token-level entities with relation extraction</p></td>
 <td><p>Long entities with relations</p></td>
 </tr>
+<tr class="row-even"><td><p><strong>StreamingSpan</strong></p></td>
+<td><p>Causal decoder with reusable prompt and text caches</p></td>
+<td><p>Span-level</p></td>
+<td><p>Incremental inference with rolling right-context rescoring</p></td>
+<td><p>Live transcripts, logs, and chunked PII detection</p></td>
+</tr>
 </tbody>
 </table>
 </div>
 <p>The framework automatically selects the appropriate architecture based on your model configuration, providing a unified API across all variants.</p>
+<p>All stateless architectures apply the checkpoint’s text-only <code class="docutils literal notranslate"><span class="pre">config.max_len</span></code>
+before encoding labels. Whether labels share a later backbone context with the
+text depends on the architecture: uni-encoders share it, while bi-encoders keep
+the two sequences separate. Cached StreamingSpan sessions use their causal
+decoder context instead. See <a class="reference internal" href="input_limits.html"><span class="std std-doc">Input limits and truncation</span></a> for
+the complete behavior and production preflight guidance.</p>
 </section>
 </section>
 <section id="vanilla-gliner-uniencoderspan">
@@ -887,6 +913,101 @@ data-aria-dark="Switch to auto color mode">
 <p>Same as UniEncoderSpanRelex - entities and relations are returned in identical formats, ensuring API consistency across architectures.</p>
 </section>
 </section>
+<section id="gliner-streamingspan">
+<h2>GLiNER StreamingSpan<a class="headerlink" href="#gliner-streamingspan" title="Link to this heading">¶</a></h2>
+<p>StreamingSpan (<code class="docutils literal notranslate"><span class="pre">model_type=&quot;gliner_streaming_span&quot;</span></code>) is the incremental
+span-classification architecture. It replaces the usual bidirectional text
+encoder with a causal decoder backbone, allowing later calls to append text to
+the decoder’s key-value (KV) cache instead of encoding the complete document
+again. This is useful when the input is revealed over time, such as a live
+transcript, chat, log stream, or progressively uploaded document.</p>
+<p>StreamingSpan should not be confused with <code class="docutils literal notranslate"><span class="pre">UniEncoderSpanDecoder</span></code>. The latter
+uses an auxiliary decoder to <em>generate</em> entity labels; StreamingSpan uses a
+decoder as its text backbone and still scores spans against the entity types
+provided by the caller.</p>
+<p><img alt="GLiNER StreamingSpan architecture" src="_images/gliner-streaming-architecture.svg" /></p>
+<section id="cold-pass-prompt-and-first-chunk">
+<h3>Cold pass: prompt and first chunk<a class="headerlink" href="#cold-pass-prompt-and-first-chunk" title="Link to this heading">¶</a></h3>
+<p>The processor serializes the requested entity types before the text:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span data-line="1">person&lt;&lt;LABEL&gt;&gt;email address&lt;&lt;LABEL&gt;&gt;&lt;&lt;SEP&gt;&gt;Alice can be reached at ...
+</span></pre></div>
+</div>
+<p>Placing <code class="docutils literal notranslate"><span class="pre">&lt;&lt;LABEL&gt;&gt;</span></code> after each label is important for a causal model: the
+marker state can attend to every subtoken in the label that precedes it. The
+first call then performs the following work:</p>
+<ol class="arabic simple">
+<li><p>The complete label prompt and first text chunk pass through the causal
+decoder.</p></li>
+<li><p>The prompt slice, ending at <code class="docutils literal notranslate"><span class="pre">&lt;&lt;SEP&gt;&gt;</span></code>, passes through a compact label context
+encoder. The states at <code class="docutils literal notranslate"><span class="pre">&lt;&lt;LABEL&gt;&gt;</span></code> become one representation per entity
+type.</p></li>
+<li><p>Text subtoken states are pooled into word states.</p></li>
+<li><p>The model stores decoder KV states, label representations, word states, text
+offsets, and span scores in the session cache.</p></li>
+</ol>
+<p>The label context encoder is independent of the causal backbone and may use a
+DeBERTa-v2, ModernBERT, or RNN context encoder. DeBERTa-v2, ModernBERT, and a
+bidirectional RNN give label names bidirectional context without making the
+text backbone non-causal.</p>
+</section>
+<section id="warm-pass-append-and-reuse">
+<h3>Warm pass: append and reuse<a class="headerlink" href="#warm-pass-append-and-reuse" title="Link to this heading">¶</a></h3>
+<p>On later calls, only the new chunk is sent through the decoder. Its tokens
+attend to the cached history, use continuing position IDs, and extend the KV
+cache. The stored label representations are reused, while the new subtoken
+states are pooled and appended to the cached word states.</p>
+<p>This avoids recomputing the decoder states for the prompt and historical text.
+It does not make inference constant-cost: decoder attention, KV memory, word
+state storage, and the span-score history still grow with the session.</p>
+</section>
+<section id="rolling-span-representations-and-scores">
+<h3>Rolling span representations and scores<a class="headerlink" href="#rolling-span-representations-and-scores" title="Link to this heading">¶</a></h3>
+<p>Candidate spans use absolute word indices and are limited by <code class="docutils literal notranslate"><span class="pre">max_width</span></code>. The
+default <code class="docutils literal notranslate"><span class="pre">markerV2</span></code> representation combines three projected vectors:</p>
+<ul class="simple">
+<li><p>the candidate’s first word;</p></li>
+<li><p>the candidate’s last word;</p></li>
+<li><p>the last valid word currently visible to the session.</p></li>
+</ul>
+<p>An optional <code class="docutils literal notranslate"><span class="pre">span_encoder_config</span></code> can contextualize the cached word sequence
+before those vectors are gathered. The resulting span representation is scored
+against each projected label representation with a dot product, as in the
+standard span architecture.</p>
+<p>A causal model cannot know future context on its first attempt. StreamingSpan
+therefore maintains a rolling revision window. Every append scores all spans
+that end in the new chunk and re-scores spans whose end is within
+<code class="docutils literal notranslate"><span class="pre">right_context_width</span></code> words of the newest word. New scores replace the stored
+scores for the same <code class="docutils literal notranslate"><span class="pre">(start,</span> <span class="pre">end)</span></code> boundary. The default right-context width is
+<code class="docutils literal notranslate"><span class="pre">max_width</span></code>; setting it to <code class="docutils literal notranslate"><span class="pre">0</span></code> gives append-only scoring.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">span_encoder_config</span></code> is bidirectional, appending a word can change every
+contextualized word representation. In that case all historical span
+candidates are re-scored from the cached word states. Passing <code class="docutils literal notranslate"><span class="pre">recompute=True</span></code>
+goes further and rebuilds the complete decoder, prompt, word, and span state
+from the accumulated text.</p>
+</section>
+<section id="training">
+<h3>Training<a class="headerlink" href="#training" title="Link to this heading">¶</a></h3>
+<p>Training uses the normal span-based GLiNER data format; examples do not need to
+be pre-split into streaming chunks. The label prompt and complete training text
+are passed through the causal backbone, all valid spans up to <code class="docutils literal notranslate"><span class="pre">max_width</span></code> are
+scored, and the causal backbone, label context encoder, span projections, and
+prompt projections are optimized with the configurable GLiNER span loss.
+Session caches are an inference optimization rather than a separate training
+objective.</p>
+</section>
+<section id="decoding-and-output-semantics">
+<h3>Decoding and output semantics<a class="headerlink" href="#decoding-and-output-semantics" title="Link to this heading">¶</a></h3>
+<p>After merging new and revised scores into the session history, the normal flat
+or nested span decoder applies the threshold. A streaming call returns the
+complete current entity snapshot with document-relative character offsets. It
+is not a delta: callers that render live changes should compare consecutive
+snapshots to identify additions, updates, and removals.</p>
+<p>The <a class="reference internal" href="streaming.html"><span class="std std-doc">StreamingSpan guide</span></a> covers the session API, persistent
+batches, asynchronous microbatching, cache cleanup, configuration, and
+deployment trade-offs. A PII-oriented checkpoint is available at
+<a class="reference external" href="https://huggingface.co/knowledgator/gliner-stream-pii-v1.0">knowledgator/gliner-stream-pii-v1.0</a>.</p>
+</section>
+</section>
 <section id="choosing-the-right-architecture">
 <h2>Choosing the Right Architecture<a class="headerlink" href="#choosing-the-right-architecture" title="Link to this heading">¶</a></h2>
 <p>Here’s a quick guide to selecting the appropriate GLiNER architecture:</p>
@@ -935,6 +1056,10 @@ data-aria-dark="Switch to auto color mode">
 <td><p>BiEncoderToken</p></td>
 <td><p>Combines both advantages</p></td>
 </tr>
+<tr class="row-odd"><td><p>Incremental or live text</p></td>
+<td><p>StreamingSpan</p></td>
+<td><p>Reuses causal caches and revises recent predictions as context arrives</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -942,24 +1067,26 @@ data-aria-dark="Switch to auto color mode">
 <h3>Decision Flowchart<a class="headerlink" href="#decision-flowchart" title="Link to this heading">¶</a></h3>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span data-line="1">Start
 </span><span data-line="2">  │
-</span><span data-line="3">  ├─ Need relation extraction?
-</span><span data-line="4">  │   ├─ Yes: Long entities expected?
-</span><span data-line="5">  │   │   ├─ Yes → UniEncoderTokenRelex
-</span><span data-line="6">  │   │   └─ No → UniEncoderSpanRelex
-</span><span data-line="7">  │   │
-</span><span data-line="8">  │   └─ No: Need open vocabulary labels?
-</span><span data-line="9">  │       ├─ Yes: Long entities expected?
-</span><span data-line="10">  │       │   ├─ Yes → UniEncoderTokenDecoder
-</span><span data-line="11">  │       │   └─ No → UniEncoderSpanDecoder
-</span><span data-line="12">  │       │
-</span><span data-line="13">  │       └─ No: Many entity types (&gt;30)?
-</span><span data-line="14">  │           ├─ Yes: Long entities expected?
-</span><span data-line="15">  │           │   ├─ Yes → BiEncoderToken
-</span><span data-line="16">  │           │   └─ No → BiEncoderSpan
-</span><span data-line="17">  │           │
-</span><span data-line="18">  │           └─ No: Long entities expected?
-</span><span data-line="19">  │               ├─ Yes → UniEncoderToken
-</span><span data-line="20">  │               └─ No → UniEncoderSpan
+</span><span data-line="3">  ├─ Incremental or live input → StreamingSpan
+</span><span data-line="4">  │
+</span><span data-line="5">  └─ Complete input: Need relation extraction?
+</span><span data-line="6">      ├─ Yes: Long entities expected?
+</span><span data-line="7">      │   ├─ Yes → UniEncoderTokenRelex
+</span><span data-line="8">      │   └─ No → UniEncoderSpanRelex
+</span><span data-line="9">      │
+</span><span data-line="10">      └─ No: Need open vocabulary labels?
+</span><span data-line="11">          ├─ Yes: Long entities expected?
+</span><span data-line="12">          │   ├─ Yes → UniEncoderTokenDecoder
+</span><span data-line="13">          │   └─ No → UniEncoderSpanDecoder
+</span><span data-line="14">          │
+</span><span data-line="15">          └─ No: Many entity types (&gt;30)?
+</span><span data-line="16">              ├─ Yes: Long entities expected?
+</span><span data-line="17">              │   ├─ Yes → BiEncoderToken
+</span><span data-line="18">              │   └─ No → BiEncoderSpan
+</span><span data-line="19">              │
+</span><span data-line="20">              └─ No: Long entities expected?
+</span><span data-line="21">                  ├─ Yes → UniEncoderToken
+</span><span data-line="22">                  └─ No → UniEncoderSpan
 </span></pre></div>
 </div>
 </section>
@@ -987,10 +1114,10 @@ data-aria-dark="Switch to auto color mode">
         <span>Previous</span><div class="title">Training</div></div>
     </a>
   </div><div class="navigation-next">
-    <a href="convert_to_onnx.html">
+    <a href="add_custom_architecture.html">
       <div class="page-info">
         <span>Next</span>
-        <div class="title">ONNX Export &amp; Deployment</div>
+        <div class="title">Creating Custom GLiNER Architectures</div>
       </div>
       <i class="i-lucide chevron-right"></i>
     </a>

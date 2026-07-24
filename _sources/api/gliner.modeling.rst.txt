@@ -21,6 +21,8 @@ Submodules
    :maxdepth: 4
 
    gliner.modeling.base
+   gliner.modeling.cache
+   gliner.modeling.context_encoders
    gliner.modeling.decoder
    gliner.modeling.encoder
    gliner.modeling.layers

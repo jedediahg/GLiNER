@@ -59,16 +59,20 @@ data-aria-dark="Switch to auto color mode">
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction to 👑 GLiNER</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../instalation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input_limits.html">Input limits and truncation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">Advanced Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../streaming.html">StreamingSpan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../configs.html">Components &amp; Configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../training.html">Training</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architectures.html">Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../add_custom_architecture.html">Creating Custom GLiNER Architectures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../convert_to_onnx.html">ONNX Export &amp; Deployment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../serving.html">Serving</a></li>
 </ul>
 <p class="caption" role="heading" aria-level="3"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="gliner.model.html">gliner.model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gliner.streaming.html">gliner.streaming module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gliner.config.html">gliner.config module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gliner.training.html">gliner.training package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="gliner.training.trainer.html">gliner.training.trainer module</a></li>
@@ -81,6 +85,8 @@ data-aria-dark="Switch to auto color mode">
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.base.html">gliner.modeling.base module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gliner.modeling.cache.html">gliner.modeling.cache module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gliner.modeling.context_encoders.html">gliner.modeling.context_encoders module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.decoder.html">gliner.modeling.decoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.encoder.html">gliner.modeling.encoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.layers.html">gliner.modeling.layers module</a></li>
@@ -131,6 +137,15 @@ data-aria-dark="Switch to auto color mode">
       <i class="i-lucide close"></i>
     </button>
     <div class="sy-scrollbar sy-rside-inner px-6 xl:top-16 xl:sticky xl:pl-0 pt-6 pb-4"><div class="localtoc"><h3>On this page</h3><ul>
+<li><a class="reference internal" href="#gliner.AsyncStreamingEngine"><code class="docutils literal notranslate"><span class="pre">AsyncStreamingEngine</span></code></a><ul>
+<li><a class="reference internal" href="#gliner.AsyncStreamingEngine.__init__"><code class="docutils literal notranslate">__init__()</span></code></a></li>
+<li><a class="reference internal" href="#gliner.AsyncStreamingEngine.start"><code class="docutils literal notranslate">start()</span></code></a></li>
+<li><a class="reference internal" href="#gliner.AsyncStreamingEngine.append"><code class="docutils literal notranslate">append()</span></code></a></li>
+<li><a class="reference internal" href="#gliner.AsyncStreamingEngine.stream"><code class="docutils literal notranslate">stream()</span></code></a></li>
+<li><a class="reference internal" href="#gliner.AsyncStreamingEngine.clear_session"><code class="docutils literal notranslate">clear_session()</span></code></a></li>
+<li><a class="reference internal" href="#gliner.AsyncStreamingEngine.close"><code class="docutils literal notranslate">close()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#gliner.GLiNER"><code class="docutils literal notranslate"><span class="pre">GLiNER</span></code></a><ul>
 <li><a class="reference internal" href="#gliner.GLiNER.model"><code class="docutils literal notranslate">model</span></code></a></li>
 <li><a class="reference internal" href="#gliner.GLiNER.config"><code class="docutils literal notranslate">config</span></code></a></li>
@@ -178,6 +193,20 @@ data-aria-dark="Switch to auto color mode">
 <li><a class="reference internal" href="#gliner.PackedBatch.__init__"><code class="docutils literal notranslate">__init__()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#gliner.StreamingBatch"><code class="docutils literal notranslate"><span class="pre">StreamingBatch</span></code></a><ul>
+<li><a class="reference internal" href="#gliner.StreamingBatch.__init__"><code class="docutils literal notranslate">__init__()</span></code></a></li>
+<li><a class="reference internal" href="#gliner.StreamingBatch.closed"><code class="docutils literal notranslate">closed</span></code></a></li>
+<li><a class="reference internal" href="#gliner.StreamingBatch.initialized"><code class="docutils literal notranslate">initialized</span></code></a></li>
+<li><a class="reference internal" href="#gliner.StreamingBatch.append"><code class="docutils literal notranslate">append()</span></code></a></li>
+<li><a class="reference internal" href="#gliner.StreamingBatch.reset"><code class="docutils literal notranslate">reset()</span></code></a></li>
+<li><a class="reference internal" href="#gliner.StreamingBatch.close"><code class="docutils literal notranslate">close()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gliner.StreamingSpanConfig"><code class="docutils literal notranslate"><span class="pre">StreamingSpanConfig</span></code></a><ul>
+<li><a class="reference internal" href="#gliner.StreamingSpanConfig.__init__"><code class="docutils literal notranslate">__init__()</span></code></a></li>
+<li><a class="reference internal" href="#gliner.StreamingSpanConfig.model_type"><code class="docutils literal notranslate">model_type</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#gliner.pack_requests"><code class="docutils literal notranslate"><span class="pre">pack_requests()</span></code></a></li>
 <li><a class="reference internal" href="#gliner.unpack_spans"><code class="docutils literal notranslate"><span class="pre">unpack_spans()</span></code></a></li>
 <li><a class="reference internal" href="#subpackages">Subpackages</a></li>
@@ -214,6 +243,62 @@ data-aria-dark="Switch to auto color mode">
         <article class="yue" role="main">
           <section id="module-gliner">
 <span id="gliner-package"></span><h1>gliner package<a class="headerlink" href="#module-gliner" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="gliner.AsyncStreamingEngine">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gliner.</span></span><span class="sig-name descname"><span class="pre">AsyncStreamingEngine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_wait_timeout_ms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queue_capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4096</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/streaming.html#AsyncStreamingEngine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.AsyncStreamingEngine" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Dynamically microbatch independently arriving streaming sessions.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.AsyncStreamingEngine.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_wait_timeout_ms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queue_capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4096</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/streaming.html#AsyncStreamingEngine.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.AsyncStreamingEngine.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.AsyncStreamingEngine.start">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/streaming.html#AsyncStreamingEngine.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.AsyncStreamingEngine.start" title="Link to this definition">¶</a></dt>
+<dd><p>Start the scheduler lazily on the current event loop.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.AsyncStreamingEngine.append">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flat_ner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_class_probs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recompute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/streaming.html#AsyncStreamingEngine.append"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.AsyncStreamingEngine.append" title="Link to this definition">¶</a></dt>
+<dd><p>Queue one append; concurrent callers are dynamically microbatched.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.AsyncStreamingEngine.stream">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">stream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/streaming.html#AsyncStreamingEngine.stream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.AsyncStreamingEngine.stream" title="Link to this definition">¶</a></dt>
+<dd><p>Yield a session snapshot for every chunk from sync or async input.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.AsyncStreamingEngine.clear_session">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">clear_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/streaming.html#AsyncStreamingEngine.clear_session"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.AsyncStreamingEngine.clear_session" title="Link to this definition">¶</a></dt>
+<dd><p>Wait for prior work on a session, then discard its cache.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.AsyncStreamingEngine.close">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/streaming.html#AsyncStreamingEngine.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.AsyncStreamingEngine.close" title="Link to this definition">¶</a></dt>
+<dd><p>Drain queued work and stop the scheduler. Idempotent.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="gliner.GLiNER">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gliner.</span></span><span class="sig-name descname"><span class="pre">GLiNER</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/model.html#GLiNER"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.GLiNER" title="Link to this definition">¶</a></dt>
@@ -700,6 +785,164 @@ within each stream.</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="gliner.StreamingBatch">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gliner.</span></span><span class="sig-name descname"><span class="pre">StreamingBatch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/streaming.html#StreamingBatch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.StreamingBatch" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Persistent fixed-order batch for synchronous streaming inference.</p>
+<p>The session-to-row mapping is immutable, allowing the decoder KV cache to
+remain batched between calls without stacking or splitting historical keys.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.StreamingBatch.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/streaming.html#StreamingBatch.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.StreamingBatch.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="gliner.StreamingBatch.closed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">closed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#gliner.StreamingBatch.closed" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="gliner.StreamingBatch.initialized">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">initialized</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#gliner.StreamingBatch.initialized" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.StreamingBatch.append">
+<span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">texts</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flat_ner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_class_probs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recompute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/streaming.html#StreamingBatch.append"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.StreamingBatch.append" title="Link to this definition">¶</a></dt>
+<dd><p>Append one text chunk per fixed session row and return snapshots.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.StreamingBatch.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/streaming.html#StreamingBatch.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.StreamingBatch.reset" title="Link to this definition">¶</a></dt>
+<dd><p>Discard the entire persistent cache while retaining row ownership.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.StreamingBatch.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/streaming.html#StreamingBatch.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.StreamingBatch.close" title="Link to this definition">¶</a></dt>
+<dd><p>Release the persistent batch cache. Idempotent.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gliner.StreamingSpanConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gliner.</span></span><span class="sig-name descname"><span class="pre">StreamingSpanConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decoder_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_encoder_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_encoder_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_token</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'&lt;&lt;LABEL&gt;&gt;'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep_token_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_cache_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_context_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_decoder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_decoder_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/config.html#StreamingSpanConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.StreamingSpanConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="gliner.config.html#gliner.config.UniEncoderConfig" title="gliner.config.UniEncoderConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniEncoderConfig</span></code></a></p>
+<p>Configuration for span NER backed directly by a causal decoder.</p>
+<p>Unlike <code class="xref py py-class docutils literal notranslate"><span class="pre">UniEncoderSpanDecoderConfig</span></code>, the decoder is the text
+backbone itself rather than an auxiliary label-generation head.  A
+dedicated model type keeps the two architectures unambiguous when models
+are saved and loaded through <a class="reference internal" href="#gliner.GLiNER" title="gliner.GLiNER"><code class="xref py py-class docutils literal notranslate"><span class="pre">GLiNER</span></code></a>.  During cached inference,
+<code class="docutils literal notranslate"><span class="pre">right_context_width</span></code> controls how many following words may revise a
+span; when omitted it defaults to <code class="docutils literal notranslate"><span class="pre">max_width</span></code>.  Set it to zero for the
+previous append-only behavior.</p>
+<p>Initialize BaseGLiNERConfig.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the pretrained encoder model.
+Defaults to “microsoft/deberta-v3-small”.</p></li>
+<li><p><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name identifier for the GLiNER model. Defaults to “gliner”.</p></li>
+<li><p><strong>max_width</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum span width for entity detection. Defaults to 12.</p></li>
+<li><p><strong>hidden_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Dimension of hidden representations. Defaults to 512.</p></li>
+<li><p><strong>dropout</strong> (<em>float</em><em>, </em><em>optional</em>) – Dropout probability. Defaults to 0.4.</p></li>
+<li><p><strong>fine_tune</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to fine-tune the encoder. Defaults to True.</p></li>
+<li><p><strong>subtoken_pooling</strong> (<em>str</em><em>, </em><em>optional</em>) – Subtoken pooling strategy. One of
+“first”, “last”, “mean”, or “max”. Defaults to “first”.</p></li>
+<li><p><strong>span_mode</strong> (<em>str</em><em>, </em><em>optional</em>) – Span representation mode. Defaults to “markerV0”.</p></li>
+<li><p><strong>post_fusion_schema</strong> (<em>str</em><em>, </em><em>optional</em>) – Post-fusion processing schema. Defaults to ‘’.</p></li>
+<li><p><strong>num_post_fusion_layers</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of post-fusion layers. Defaults to 1.</p></li>
+<li><p><strong>vocab_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Vocabulary size. Defaults to -1.</p></li>
+<li><p><strong>max_neg_type_ratio</strong> (<em>int</em><em>, </em><em>optional</em>) – Max ratio of negative to positive types. Defaults to 1.</p></li>
+<li><p><strong>max_types</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of entity types. Defaults to 25.</p></li>
+<li><p><strong>max_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum sequence length. Defaults to 384.</p></li>
+<li><p><strong>words_splitter_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Word splitter type. Defaults to “whitespace”.</p></li>
+<li><p><strong>num_rnn_layers</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of LSTM layers, if less then 1, then LSTM is not used.</p></li>
+<li><p><strong>fuse_layers</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to fuse layers. Defaults to False.</p></li>
+<li><p><strong>embed_ent_token</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to embed entity tokens. Defaults to True.</p></li>
+<li><p><strong>class_token_index</strong> (<em>int</em><em>, </em><em>optional</em>) – Index of class token. Defaults to -1.</p></li>
+<li><p><strong>encoder_config</strong> (<em>dict</em><em>, </em><em>optional</em>) – Encoder configuration dict. Defaults to None.</p></li>
+<li><p><strong>span_encoder_config</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional hidden-state encoder
+applied before span representations. Defaults to None.</p></li>
+<li><p><strong>ent_token</strong> (<em>str</em><em>, </em><em>optional</em>) – Entity marker token. Defaults to “&lt;&lt;ENT&gt;&gt;”.</p></li>
+<li><p><strong>sep_token</strong> (<em>str</em><em>, </em><em>optional</em>) – Separator token. Defaults to “&lt;&lt;SEP&gt;&gt;”.</p></li>
+<li><p><strong>_attn_implementation</strong> (<em>str</em><em>, </em><em>optional</em>) – Attention implementation. Defaults to None.</p></li>
+<li><p><strong>token_loss_coef</strong> (<em>float</em><em>, </em><em>optional</em>) – Token loss coefficient. Defaults to 1.0.</p></li>
+<li><p><strong>span_loss_coef</strong> (<em>float</em><em>, </em><em>optional</em>) – Span loss coefficient. Defaults to 1.0.</p></li>
+<li><p><strong>represent_spans</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to represent spans. Defaults to False.</p></li>
+<li><p><strong>neg_spans_ratio</strong> (<em>float</em><em>, </em><em>optional</em>) – Ratio of negative spans. Defaults to 1.0.</p></li>
+<li><p><strong>precomputed_prompts_mode</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – Whether to use precomputed prompts. Defaults to None.</p></li>
+<li><p><strong>id_to_classes</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Mapping from class IDs to class names. Defaults to None.</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments passed to parent class.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.StreamingSpanConfig.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decoder_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_encoder_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_encoder_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_token</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'&lt;&lt;LABEL&gt;&gt;'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep_token_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_cache_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_context_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_decoder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_decoder_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/config.html#StreamingSpanConfig.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.StreamingSpanConfig.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialize BaseGLiNERConfig.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the pretrained encoder model.
+Defaults to “microsoft/deberta-v3-small”.</p></li>
+<li><p><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name identifier for the GLiNER model. Defaults to “gliner”.</p></li>
+<li><p><strong>max_width</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum span width for entity detection. Defaults to 12.</p></li>
+<li><p><strong>hidden_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Dimension of hidden representations. Defaults to 512.</p></li>
+<li><p><strong>dropout</strong> (<em>float</em><em>, </em><em>optional</em>) – Dropout probability. Defaults to 0.4.</p></li>
+<li><p><strong>fine_tune</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to fine-tune the encoder. Defaults to True.</p></li>
+<li><p><strong>subtoken_pooling</strong> (<em>str</em><em>, </em><em>optional</em>) – Subtoken pooling strategy. One of
+“first”, “last”, “mean”, or “max”. Defaults to “first”.</p></li>
+<li><p><strong>span_mode</strong> (<em>str</em><em>, </em><em>optional</em>) – Span representation mode. Defaults to “markerV0”.</p></li>
+<li><p><strong>post_fusion_schema</strong> (<em>str</em><em>, </em><em>optional</em>) – Post-fusion processing schema. Defaults to ‘’.</p></li>
+<li><p><strong>num_post_fusion_layers</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of post-fusion layers. Defaults to 1.</p></li>
+<li><p><strong>vocab_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Vocabulary size. Defaults to -1.</p></li>
+<li><p><strong>max_neg_type_ratio</strong> (<em>int</em><em>, </em><em>optional</em>) – Max ratio of negative to positive types. Defaults to 1.</p></li>
+<li><p><strong>max_types</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of entity types. Defaults to 25.</p></li>
+<li><p><strong>max_len</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum sequence length. Defaults to 384.</p></li>
+<li><p><strong>words_splitter_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Word splitter type. Defaults to “whitespace”.</p></li>
+<li><p><strong>num_rnn_layers</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of LSTM layers, if less then 1, then LSTM is not used.</p></li>
+<li><p><strong>fuse_layers</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to fuse layers. Defaults to False.</p></li>
+<li><p><strong>embed_ent_token</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to embed entity tokens. Defaults to True.</p></li>
+<li><p><strong>class_token_index</strong> (<em>int</em><em>, </em><em>optional</em>) – Index of class token. Defaults to -1.</p></li>
+<li><p><strong>encoder_config</strong> (<em>dict</em><em>, </em><em>optional</em>) – Encoder configuration dict. Defaults to None.</p></li>
+<li><p><strong>span_encoder_config</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optional hidden-state encoder
+applied before span representations. Defaults to None.</p></li>
+<li><p><strong>ent_token</strong> (<em>str</em><em>, </em><em>optional</em>) – Entity marker token. Defaults to “&lt;&lt;ENT&gt;&gt;”.</p></li>
+<li><p><strong>sep_token</strong> (<em>str</em><em>, </em><em>optional</em>) – Separator token. Defaults to “&lt;&lt;SEP&gt;&gt;”.</p></li>
+<li><p><strong>_attn_implementation</strong> (<em>str</em><em>, </em><em>optional</em>) – Attention implementation. Defaults to None.</p></li>
+<li><p><strong>token_loss_coef</strong> (<em>float</em><em>, </em><em>optional</em>) – Token loss coefficient. Defaults to 1.0.</p></li>
+<li><p><strong>span_loss_coef</strong> (<em>float</em><em>, </em><em>optional</em>) – Span loss coefficient. Defaults to 1.0.</p></li>
+<li><p><strong>represent_spans</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to represent spans. Defaults to False.</p></li>
+<li><p><strong>neg_spans_ratio</strong> (<em>float</em><em>, </em><em>optional</em>) – Ratio of negative spans. Defaults to 1.0.</p></li>
+<li><p><strong>precomputed_prompts_mode</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – Whether to use precomputed prompts. Defaults to None.</p></li>
+<li><p><strong>id_to_classes</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Mapping from class IDs to class names. Defaults to None.</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments passed to parent class.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gliner.StreamingSpanConfig.model_type">
+<span class="sig-name descname"><span class="pre">model_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'gliner_streaming_span'</span></em><a class="headerlink" href="#gliner.StreamingSpanConfig.model_type" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="gliner.pack_requests">
 <span class="sig-prename descclassname"><span class="pre">gliner.</span></span><span class="sig-name descname"><span class="pre">pack_requests</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">requests</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad_token_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/infer_packing.html#pack_requests"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.pack_requests" title="Link to this definition">¶</a></dt>
@@ -809,6 +1052,8 @@ arrays; if PyTorch tensor, outputs will be PyTorch tensors.</p>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.base.html">gliner.modeling.base module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gliner.modeling.cache.html">gliner.modeling.cache module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gliner.modeling.context_encoders.html">gliner.modeling.context_encoders module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.decoder.html">gliner.modeling.decoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.encoder.html">gliner.modeling.encoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.layers.html">gliner.modeling.layers module</a></li>
@@ -853,6 +1098,7 @@ arrays; if PyTorch tensor, outputs will be PyTorch tensors.</p>
 <li class="toctree-l1"><a class="reference internal" href="gliner.config.html">gliner.config module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gliner.infer_packing.html">gliner.infer_packing module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gliner.model.html">gliner.model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gliner.streaming.html">gliner.streaming module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gliner.utils.html">gliner.utils module</a></li>
 </ul>
 </div>

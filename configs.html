@@ -2,7 +2,7 @@
 <html lang="en" data-accent-color="violet" data-content_root="./">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Components &amp; Configs - Home 0.2.24 documentation</title><link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Training" href="training.html" /><link rel="prev" title="Advanced Usage" href="usage.html" /><script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Components &amp; Configs - Home 0.2.24 documentation</title><link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Training" href="training.html" /><link rel="prev" title="StreamingSpan" href="streaming.html" /><script>
     function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
     setColorMode(localStorage._theme||"auto");
   </script><link rel="stylesheet" type="text/css" href="_static/pygments.css?v=e1a1ceaf" />
@@ -59,16 +59,20 @@ data-aria-dark="Switch to auto color mode">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction to 👑 GLiNER</a></li>
 <li class="toctree-l1"><a class="reference internal" href="instalation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input_limits.html">Input limits and truncation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Advanced Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="streaming.html">StreamingSpan</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Components &amp; Configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="training.html">Training</a></li>
 <li class="toctree-l1"><a class="reference internal" href="architectures.html">Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="add_custom_architecture.html">Creating Custom GLiNER Architectures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="convert_to_onnx.html">ONNX Export &amp; Deployment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="serving.html">Serving</a></li>
 </ul>
 <p class="caption" role="heading" aria-level="3"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/gliner.model.html">gliner.model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/gliner.streaming.html">gliner.streaming module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gliner.config.html">gliner.config module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/gliner.training.html">gliner.training package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/gliner.training.trainer.html">gliner.training.trainer module</a></li>
@@ -81,6 +85,8 @@ data-aria-dark="Switch to auto color mode">
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="api/gliner.modeling.base.html">gliner.modeling.base module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gliner.modeling.cache.html">gliner.modeling.cache module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/gliner.modeling.context_encoders.html">gliner.modeling.context_encoders module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/gliner.modeling.decoder.html">gliner.modeling.decoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/gliner.modeling.encoder.html">gliner.modeling.encoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/gliner.modeling.layers.html">gliner.modeling.layers module</a></li>
@@ -154,6 +160,7 @@ data-aria-dark="Switch to auto color mode">
 <li><a class="reference internal" href="#embed-ent-token"><code class="docutils literal notranslate"><span class="pre">embed_ent_token</span></code></a></li>
 <li><a class="reference internal" href="#class-token-index"><code class="docutils literal notranslate"><span class="pre">class_token_index</span></code></a></li>
 <li><a class="reference internal" href="#encoder-config"><code class="docutils literal notranslate"><span class="pre">encoder_config</span></code></a></li>
+<li><a class="reference internal" href="#span-encoder-config"><code class="docutils literal notranslate"><span class="pre">span_encoder_config</span></code></a></li>
 <li><a class="reference internal" href="#ent-token"><code class="docutils literal notranslate"><span class="pre">ent_token</span></code></a></li>
 <li><a class="reference internal" href="#sep-token"><code class="docutils literal notranslate"><span class="pre">sep_token</span></code></a></li>
 <li><a class="reference internal" href="#attn-implementation"><code class="docutils literal notranslate"><span class="pre">_attn_implementation</span></code></a></li>
@@ -360,7 +367,19 @@ data-aria-dark="Switch to auto color mode">
 <section id="subtoken-pooling">
 <h4><code class="docutils literal notranslate"><span class="pre">subtoken_pooling</span></code><a class="headerlink" href="#subtoken-pooling" title="Link to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">str</span></code>, <em>optional</em>, defaults to <code class="docutils literal notranslate"><span class="pre">&quot;first&quot;</span></code></p>
-<p>Currently only first token pooling is supported. More approaches will be added in the future.</p>
+<p>Controls how contextualized subtoken representations are combined into one word
+representation.</p>
+<p><strong>Available options:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;first&quot;</span></code> — Uses the first subtoken representation. This is the default and
+remains compatible with existing checkpoints.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;last&quot;</span></code> — Uses the last subtoken representation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;mean&quot;</span></code> — Averages all subtoken representations belonging to the word.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;max&quot;</span></code> — Takes the element-wise maximum across all subtoken representations
+belonging to the word.</p></li>
+</ul>
+<p>Use the same pooling strategy for training and inference. Changing this setting
+for an already-trained checkpoint can reduce prediction quality.</p>
 </section>
 <hr class="docutils" />
 <section id="span-mode-source">
@@ -431,14 +450,26 @@ data-aria-dark="Switch to auto color mode">
 <section id="max-len">
 <h4><code class="docutils literal notranslate"><span class="pre">max_len</span></code><a class="headerlink" href="#max-len" title="Link to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">int</span></code>, <em>optional</em>, defaults to <code class="docutils literal notranslate"><span class="pre">384</span></code></p>
-<p>Maximum sequence length accepted by the encoder.</p>
+<p>Maximum number of text tokens retained from GLiNER’s configured word splitter.
+This limit is applied before the entity/relation prompt is added and before
+transformer subword tokenization. If an input is longer, stateless processing
+emits a <code class="docutils literal notranslate"><span class="pre">UserWarning</span></code> and keeps the first <code class="docutils literal notranslate"><span class="pre">max_len</span></code> splitter tokens. Checkpoint
+configurations may override the base default.</p>
+<p>This is not necessarily the backbone’s total context length. Uni-encoder
+prompts and text share the later transformer subword/context limit, while
+bi-encoders encode labels separately. See <a class="reference internal" href="input_limits.html"><span class="std std-doc">Input limits and
+truncation</span></a> for all limits and the StreamingSpan exception.</p>
 </section>
 <hr class="docutils" />
 <section id="words-splitter-type">
 <h4><code class="docutils literal notranslate"><span class="pre">words_splitter_type</span></code><a class="headerlink" href="#words-splitter-type" title="Link to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">str</span></code>, <em>optional</em>, defaults to <code class="docutils literal notranslate"><span class="pre">&quot;whitespace&quot;</span></code></p>
 <p>Heuristic used for word-level splitting during inference.<br />
-<strong>Choices:</strong> <code class="docutils literal notranslate"><span class="pre">&quot;whitespace&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;spacy&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;moses&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">stanza</span></code>, <code class="docutils literal notranslate"><span class="pre">universal</span></code></p>
+The resulting token count is what <code class="docutils literal notranslate"><span class="pre">max_len</span></code> limits. The default <code class="docutils literal notranslate"><span class="pre">whitespace</span></code>
+splitter separates punctuation as well as whitespace, so <code class="docutils literal notranslate"><span class="pre">text.split()</span></code> is not
+an equivalent counter.</p>
+<p><strong>Choices:</strong> <code class="docutils literal notranslate"><span class="pre">&quot;whitespace&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;universal&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;spacy&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;mecab&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;jieba&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;hanlp&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;janome&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;camel&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;hindi&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;stanza&quot;</span></code></p>
 </section>
 <hr class="docutils" />
 <section id="num-rnn-layers">
@@ -469,6 +500,23 @@ data-aria-dark="Switch to auto color mode">
 <h4><code class="docutils literal notranslate"><span class="pre">encoder_config</span></code><a class="headerlink" href="#encoder-config" title="Link to this heading">¶</a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">dict</span></code> or <code class="docutils literal notranslate"><span class="pre">PretrainedConfig</span></code>, <em>optional</em></p>
 <p>A nested config dictionary for the encoder model. If a dict is passed, its <code class="docutils literal notranslate"><span class="pre">model_type</span></code> must be set or inferred.</p>
+</section>
+<hr class="docutils" />
+<section id="span-encoder-config">
+<h4><code class="docutils literal notranslate"><span class="pre">span_encoder_config</span></code><a class="headerlink" href="#span-encoder-config" title="Link to this heading">¶</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">dict</span></code> or <code class="docutils literal notranslate"><span class="pre">PretrainedConfig</span></code>, <em>optional</em>, defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<p>An optional context encoder applied to word representations immediately before
+the span representation layer. Supported <code class="docutils literal notranslate"><span class="pre">model_type</span></code> values are
+<code class="docutils literal notranslate"><span class="pre">&quot;deberta-v2&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;modernbert&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;rnn&quot;</span></code>. Its internal <code class="docutils literal notranslate"><span class="pre">hidden_size</span></code> may
+differ from the model hidden size; projections are added automatically.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="nt">span_encoder_config</span><span class="p">:</span>
+</span><span data-line="2"><span class="w">  </span><span class="nt">model_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rnn</span>
+</span><span data-line="3"><span class="w">  </span><span class="nt">hidden_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">512</span>
+</span><span data-line="4"><span class="w">  </span><span class="nt">num_hidden_layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span data-line="5"><span class="w">  </span><span class="nt">bidirectional</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span></pre></div>
+</div>
+<p>Set this field to <code class="docutils literal notranslate"><span class="pre">null</span></code> to use the word representations unchanged.</p>
 </section>
 <hr class="docutils" />
 <section id="ent-token">
@@ -1176,10 +1224,10 @@ Masking strategy for negative sampling.<br />
   </svg>
   <span>Back to top</span>
 </button><div class="navigation flex print:hidden"><div class="navigation-prev">
-    <a href="usage.html">
+    <a href="streaming.html">
       <i class="i-lucide chevron-left"></i>
       <div class="page-info">
-        <span>Previous</span><div class="title">Advanced Usage</div></div>
+        <span>Previous</span><div class="title">StreamingSpan</div></div>
     </a>
   </div><div class="navigation-next">
     <a href="training.html">

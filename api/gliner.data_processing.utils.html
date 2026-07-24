@@ -59,16 +59,20 @@ data-aria-dark="Switch to auto color mode">
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction to 👑 GLiNER</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../instalation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input_limits.html">Input limits and truncation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">Advanced Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../streaming.html">StreamingSpan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../configs.html">Components &amp; Configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../training.html">Training</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architectures.html">Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../add_custom_architecture.html">Creating Custom GLiNER Architectures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../convert_to_onnx.html">ONNX Export &amp; Deployment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../serving.html">Serving</a></li>
 </ul>
 <p class="caption" role="heading" aria-level="3"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="gliner.model.html">gliner.model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gliner.streaming.html">gliner.streaming module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gliner.config.html">gliner.config module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gliner.training.html">gliner.training package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="gliner.training.trainer.html">gliner.training.trainer module</a></li>
@@ -81,6 +85,8 @@ data-aria-dark="Switch to auto color mode">
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.base.html">gliner.modeling.base module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gliner.modeling.cache.html">gliner.modeling.cache module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gliner.modeling.context_encoders.html">gliner.modeling.context_encoders module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.decoder.html">gliner.modeling.decoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.encoder.html">gliner.modeling.encoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.layers.html">gliner.modeling.layers module</a></li>
@@ -136,6 +142,7 @@ data-aria-dark="Switch to auto color mode">
 <li><a class="reference internal" href="#gliner.data_processing.utils.prepare_word_mask"><code class="docutils literal notranslate"><span class="pre">prepare_word_mask()</span></code></a></li>
 <li><a class="reference internal" href="#gliner.data_processing.utils.make_mapping"><code class="docutils literal notranslate"><span class="pre">make_mapping()</span></code></a></li>
 <li><a class="reference internal" href="#gliner.data_processing.utils.prepare_span_idx"><code class="docutils literal notranslate"><span class="pre">prepare_span_idx()</span></code></a></li>
+<li><a class="reference internal" href="#gliner.data_processing.utils.prepare_streaming_span_idx"><code class="docutils literal notranslate"><span class="pre">prepare_streaming_span_idx()</span></code></a></li>
 </ul>
 </div><div id="ethical-ad-placement" data-ea-publisher="readthedocs"></div></div>
   </aside>
@@ -244,7 +251,7 @@ number of unique types in batch).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="gliner.data_processing.utils.prepare_word_mask">
-<span class="sig-prename descclassname"><span class="pre">gliner.data_processing.utils.</span></span><span class="sig-name descname"><span class="pre">prepare_word_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">texts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenized_inputs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_first_words</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/data_processing/utils.html#prepare_word_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.data_processing.utils.prepare_word_mask" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">gliner.data_processing.utils.</span></span><span class="sig-name descname"><span class="pre">prepare_word_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">texts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenized_inputs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_first_words</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subtoken_pooling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'first'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/data_processing/utils.html#prepare_word_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.data_processing.utils.prepare_word_mask" title="Link to this definition">¶</a></dt>
 <dd><p>Create word-level masks for subword tokenized sequences.</p>
 <p>Maps subword tokens back to their original word positions, enabling span
 extraction at the word level. Each subword token is assigned an integer
@@ -262,10 +269,11 @@ word_ids() method (e.g., from HuggingFace tokenizers).</p></li>
 <li><p><strong>skip_first_words</strong> (<em>Sequence</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Optional number of words to skip at the beginning of
 each sequence (e.g., prompt words). Must have the same length as texts
 if provided. Skipped words are masked as 0.</p></li>
-<li><p><strong>token_level</strong> (<em>bool</em>) – If True, assign a unique mask value to every token of a word
-(enabling token-level granularity). If False, only the first subword
-token of each word gets a mask value; continuation tokens are masked
-as 0 (default: False).</p></li>
+<li><p><strong>token_level</strong> (<em>bool</em>) – If True, assign the word index to every subtoken, overriding
+<code class="docutils literal notranslate"><span class="pre">subtoken_pooling</span></code>. Defaults to False.</p></li>
+<li><p><strong>subtoken_pooling</strong> (<em>str</em>) – Determines which subtokens receive a word index when
+<code class="docutils literal notranslate"><span class="pre">token_level</span></code> is False: the first subtoken for <code class="docutils literal notranslate"><span class="pre">first</span></code>, the last
+for <code class="docutils literal notranslate"><span class="pre">last</span></code>, or every subtoken for <code class="docutils literal notranslate"><span class="pre">mean</span></code> and <code class="docutils literal notranslate"><span class="pre">max</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -273,7 +281,7 @@ as 0 (default: False).</p></li>
 same length as the corresponding tokenized sequence. Values are:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>0: Special tokens, skipped words, or continuation subwords</p></li>
+<li><p>0: Special tokens, skipped words, or unselected subtokens</p></li>
 <li><p>1, 2, 3, …: Word indices (1-indexed) after skipping</p></li>
 </ul>
 </div></blockquote>
@@ -382,6 +390,23 @@ contains:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>torch.LongTensor of shape (num_tokens * max_width, 2) with columns [start, end].</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="gliner.data_processing.utils.prepare_streaming_span_idx">
+<span class="sig-prename descclassname"><span class="pre">gliner.data_processing.utils.</span></span><span class="sig-name descname"><span class="pre">prepare_streaming_span_idx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">past_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_tokens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recompute_all</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_context_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/data_processing/utils.html#prepare_streaming_span_idx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.data_processing.utils.prepare_streaming_span_idx" title="Link to this definition">¶</a></dt>
+<dd><p>Generate absolute span candidates for the next streaming chunk.</p>
+<p>In incremental mode, all spans ending in the new chunk are valid.  Spans
+ending up to <code class="docutils literal notranslate"><span class="pre">right_context_width</span></code> words before the latest word are also
+regenerated so future context can revise their scores.  A zero-width right
+context preserves append-only scoring.  Full-recompute mode enumerates
+every historical span again.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A tuple <code class="docutils literal notranslate"><span class="pre">(span_idx,</span> <span class="pre">span_mask)</span></code> where <code class="docutils literal notranslate"><span class="pre">span_idx</span></code> has shape
+<code class="docutils literal notranslate"><span class="pre">(num_starts</span> <span class="pre">*</span> <span class="pre">max_width,</span> <span class="pre">2)</span></code> and uses absolute session word indices.</p>
 </dd>
 </dl>
 </dd></dl>

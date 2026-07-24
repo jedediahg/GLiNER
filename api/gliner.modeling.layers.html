@@ -59,16 +59,20 @@ data-aria-dark="Switch to auto color mode">
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction to 👑 GLiNER</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../instalation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input_limits.html">Input limits and truncation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">Advanced Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../streaming.html">StreamingSpan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../configs.html">Components &amp; Configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../training.html">Training</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architectures.html">Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../add_custom_architecture.html">Creating Custom GLiNER Architectures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../convert_to_onnx.html">ONNX Export &amp; Deployment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../serving.html">Serving</a></li>
 </ul>
 <p class="caption" role="heading" aria-level="3"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="gliner.model.html">gliner.model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gliner.streaming.html">gliner.streaming module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gliner.config.html">gliner.config module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gliner.training.html">gliner.training package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="gliner.training.trainer.html">gliner.training.trainer module</a></li>
@@ -81,6 +85,8 @@ data-aria-dark="Switch to auto color mode">
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.base.html">gliner.modeling.base module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gliner.modeling.cache.html">gliner.modeling.cache module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gliner.modeling.context_encoders.html">gliner.modeling.context_encoders module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.decoder.html">gliner.modeling.decoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.encoder.html">gliner.modeling.encoder module</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">gliner.modeling.layers module</a></li>
@@ -191,6 +197,11 @@ data-aria-dark="Switch to auto color mode">
 <li><a class="reference internal" href="#gliner.modeling.layers.LayersFuser.output_projection"><code class="docutils literal notranslate">output_projection</span></code></a></li>
 <li><a class="reference internal" href="#gliner.modeling.layers.LayersFuser.__init__"><code class="docutils literal notranslate">__init__()</span></code></a></li>
 <li><a class="reference internal" href="#gliner.modeling.layers.LayersFuser.forward"><code class="docutils literal notranslate">forward()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#gliner.modeling.layers.StreamingSpanLabelsEncoder"><code class="docutils literal notranslate"><span class="pre">StreamingSpanLabelsEncoder</span></code></a><ul>
+<li><a class="reference internal" href="#gliner.modeling.layers.StreamingSpanLabelsEncoder.__init__"><code class="docutils literal notranslate">__init__()</span></code></a></li>
+<li><a class="reference internal" href="#gliner.modeling.layers.StreamingSpanLabelsEncoder.forward"><code class="docutils literal notranslate">forward()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -814,6 +825,45 @@ Defaults to None.</p></li>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gliner.modeling.layers.StreamingSpanLabelsEncoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gliner.modeling.layers.</span></span><span class="sig-name descname"><span class="pre">StreamingSpanLabelsEncoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/modeling/layers.html#StreamingSpanLabelsEncoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.modeling.layers.StreamingSpanLabelsEncoder" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.modeling.layers.StreamingSpanLabelsEncoder.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/modeling/layers.html#StreamingSpanLabelsEncoder.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.modeling.layers.StreamingSpanLabelsEncoder.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gliner.modeling.layers.StreamingSpanLabelsEncoder.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hidden_states</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attention_mask</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/modeling/layers.html#StreamingSpanLabelsEncoder.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.modeling.layers.StreamingSpanLabelsEncoder.forward" title="Link to this definition">¶</a></dt>
+<dd><p>Forward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hidden_states</strong> – (batch_size, seq_length, hidden_size) from decoder backbone</p></li>
+<li><p><strong>input_ids</strong> – (batch_size, seq_length)</p></li>
+<li><p><strong>attention_mask</strong> – (batch_size, seq_length)</p></li>
+<li><p><strong>**kwargs</strong> – Reserved for interface compatibility.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>label representations of shape (batch_size, num_labels, hidden_size)</p></li>
+<li><p>label mask of shape (batch_size, num_labels)</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple containing</p>
 </dd>
 </dl>
 </dd></dl>

@@ -1,0 +1,7 @@
+gliner.streaming module
+=======================
+
+.. automodule:: gliner.streaming
+   :members:
+   :undoc-members:
+   :show-inheritance:

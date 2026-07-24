@@ -2,7 +2,7 @@
 <html lang="en" data-accent-color="violet" data-content_root="../">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>gliner.modeling.decoder module - Home 0.2.24 documentation</title><link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="gliner.modeling.encoder module" href="gliner.modeling.encoder.html" /><link rel="prev" title="gliner.modeling.base module" href="gliner.modeling.base.html" /><script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>gliner.modeling.decoder module - Home 0.2.24 documentation</title><link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="gliner.modeling.encoder module" href="gliner.modeling.encoder.html" /><link rel="prev" title="gliner.modeling.context_encoders module" href="gliner.modeling.context_encoders.html" /><script>
     function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
     setColorMode(localStorage._theme||"auto");
   </script><link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=e1a1ceaf" />
@@ -59,16 +59,20 @@ data-aria-dark="Switch to auto color mode">
 <li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction to 👑 GLiNER</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../instalation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input_limits.html">Input limits and truncation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">Advanced Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../streaming.html">StreamingSpan</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../configs.html">Components &amp; Configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../training.html">Training</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../architectures.html">Architectures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../add_custom_architecture.html">Creating Custom GLiNER Architectures</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../convert_to_onnx.html">ONNX Export &amp; Deployment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../serving.html">Serving</a></li>
 </ul>
 <p class="caption" role="heading" aria-level="3"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="gliner.model.html">gliner.model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gliner.streaming.html">gliner.streaming module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gliner.config.html">gliner.config module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gliner.training.html">gliner.training package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="gliner.training.trainer.html">gliner.training.trainer module</a></li>
@@ -81,6 +85,8 @@ data-aria-dark="Switch to auto color mode">
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.base.html">gliner.modeling.base module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gliner.modeling.cache.html">gliner.modeling.cache module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gliner.modeling.context_encoders.html">gliner.modeling.context_encoders module</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">gliner.modeling.decoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.encoder.html">gliner.modeling.encoder module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gliner.modeling.layers.html">gliner.modeling.layers module</a></li>
@@ -229,7 +235,7 @@ and adding a small epsilon for stability.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gliner.modeling.decoder.DecoderTransformer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gliner.modeling.decoder.</span></span><span class="sig-name descname"><span class="pre">DecoderTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_pretrained</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/modeling/decoder.html#DecoderTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.modeling.decoder.DecoderTransformer" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gliner.modeling.decoder.</span></span><span class="sig-name descname"><span class="pre">DecoderTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_pretrained</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_causal_lm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/modeling/decoder.html#DecoderTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.modeling.decoder.DecoderTransformer" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
 <p>Wrapper for causal language model decoders with adapter support.</p>
 <p>This class provides a unified interface for autoregressive decoder models,
@@ -252,11 +258,14 @@ It also handles PEFT/LoRA adapter loading when available.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model_name</strong> (<em>str</em>) – Name or path of the pretrained model to load.</p></li>
-<li><p><strong>config</strong> (<em>Any</em>) – Configuration object containing model hyperparameters. Must have
-a <cite>labels_decoder_config</cite> attribute.</p></li>
+<li><p><strong>config</strong> (<em>Any</em>) – Configuration object containing model hyperparameters. StreamingSpan
+models use <code class="docutils literal notranslate"><span class="pre">decoder_config</span></code>; auxiliary generative decoders retain
+the legacy <code class="docutils literal notranslate"><span class="pre">labels_decoder_config</span></code> field.</p></li>
 <li><p><strong>from_pretrained</strong> (<em>bool</em>) – If True, loads pretrained weights. If False, initializes
 from config only. Defaults to False.</p></li>
 <li><p><strong>cache_dir</strong> (<em>str</em><em> | </em><em>Path</em><em> | </em><em>None</em>) – Optional directory for caching downloaded models. Defaults to None.</p></li>
+<li><p><strong>use_causal_lm</strong> (<em>bool</em>) – Use <code class="docutils literal notranslate"><span class="pre">AutoModelForCausalLM</span></code> and return vocabulary logits.
+When False, use <code class="docutils literal notranslate"><span class="pre">AutoModel</span></code> and return backbone hidden states.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -265,17 +274,20 @@ from config only. Defaults to False.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="gliner.modeling.decoder.DecoderTransformer.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_pretrained</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/modeling/decoder.html#DecoderTransformer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.modeling.decoder.DecoderTransformer.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_pretrained</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_causal_lm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/modeling/decoder.html#DecoderTransformer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.modeling.decoder.DecoderTransformer.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Initializes the decoder transformer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model_name</strong> (<em>str</em>) – Name or path of the pretrained model to load.</p></li>
-<li><p><strong>config</strong> (<em>Any</em>) – Configuration object containing model hyperparameters. Must have
-a <cite>labels_decoder_config</cite> attribute.</p></li>
+<li><p><strong>config</strong> (<em>Any</em>) – Configuration object containing model hyperparameters. StreamingSpan
+models use <code class="docutils literal notranslate"><span class="pre">decoder_config</span></code>; auxiliary generative decoders retain
+the legacy <code class="docutils literal notranslate"><span class="pre">labels_decoder_config</span></code> field.</p></li>
 <li><p><strong>from_pretrained</strong> (<em>bool</em>) – If True, loads pretrained weights. If False, initializes
 from config only. Defaults to False.</p></li>
 <li><p><strong>cache_dir</strong> (<em>str</em><em> | </em><em>Path</em><em> | </em><em>None</em>) – Optional directory for caching downloaded models. Defaults to None.</p></li>
+<li><p><strong>use_causal_lm</strong> (<em>bool</em>) – Use <code class="docutils literal notranslate"><span class="pre">AutoModelForCausalLM</span></code> and return vocabulary logits.
+When False, use <code class="docutils literal notranslate"><span class="pre">AutoModel</span></code> and return backbone hidden states.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -296,10 +308,12 @@ from config only. Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Logits tensor of shape (batch_size, seq_len, vocab_size).</p>
+<dd class="field-even"><p>A tuple containing model representations and optional KV cache. The
+representations are vocabulary logits in causal-LM mode and backbone
+hidden states otherwise.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em></p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Any</em> | None]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -308,7 +322,7 @@ from config only. Defaults to False.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gliner.modeling.decoder.Decoder">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gliner.modeling.decoder.</span></span><span class="sig-name descname"><span class="pre">Decoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_pretrained</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/modeling/decoder.html#Decoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.modeling.decoder.Decoder" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gliner.modeling.decoder.</span></span><span class="sig-name descname"><span class="pre">Decoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_pretrained</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_causal_lm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/modeling/decoder.html#Decoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.modeling.decoder.Decoder" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
 <p>High-level decoder interface for autoregressive generation.</p>
 <p>This class provides a unified interface for text generation from embeddings,
@@ -331,26 +345,32 @@ generation API.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>config</strong> (<em>Any</em>) – Configuration object containing model hyperparameters including
-<cite>labels_decoder</cite> (model name) and decoder-specific settings.</p></li>
+<li><p><strong>config</strong> (<em>Any</em>) – Configuration object containing model hyperparameters. StreamingSpan
+uses <code class="docutils literal notranslate"><span class="pre">model_name</span></code> for its backbone; legacy generative architectures
+use <code class="docutils literal notranslate"><span class="pre">labels_decoder</span></code> for their separate decoder.</p></li>
 <li><p><strong>from_pretrained</strong> (<em>bool</em>) – If True, loads pretrained weights for the decoder.
 Defaults to False.</p></li>
 <li><p><strong>cache_dir</strong> (<em>str</em><em> | </em><em>Path</em><em> | </em><em>None</em>) – Optional directory for caching downloaded models. Defaults to None.</p></li>
+<li><p><strong>use_causal_lm</strong> (<em>bool</em>) – Use a causal language-model head when True, or return
+backbone hidden states through <code class="docutils literal notranslate"><span class="pre">AutoModel</span></code> when False.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="gliner.modeling.decoder.Decoder.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_pretrained</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/modeling/decoder.html#Decoder.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.modeling.decoder.Decoder.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_pretrained</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_causal_lm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gliner/modeling/decoder.html#Decoder.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gliner.modeling.decoder.Decoder.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Initializes the decoder.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>config</strong> (<em>Any</em>) – Configuration object containing model hyperparameters including
-<cite>labels_decoder</cite> (model name) and decoder-specific settings.</p></li>
+<li><p><strong>config</strong> (<em>Any</em>) – Configuration object containing model hyperparameters. StreamingSpan
+uses <code class="docutils literal notranslate"><span class="pre">model_name</span></code> for its backbone; legacy generative architectures
+use <code class="docutils literal notranslate"><span class="pre">labels_decoder</span></code> for their separate decoder.</p></li>
 <li><p><strong>from_pretrained</strong> (<em>bool</em>) – If True, loads pretrained weights for the decoder.
 Defaults to False.</p></li>
 <li><p><strong>cache_dir</strong> (<em>str</em><em> | </em><em>Path</em><em> | </em><em>None</em>) – Optional directory for caching downloaded models. Defaults to None.</p></li>
+<li><p><strong>use_causal_lm</strong> (<em>bool</em>) – Use a causal language-model head when True, or return
+backbone hidden states through <code class="docutils literal notranslate"><span class="pre">AutoModel</span></code> when False.</p></li>
 </ul>
 </dd>
 </dl>
@@ -493,10 +513,12 @@ routes to generate_from_embeds(), otherwise routes to model.generate().</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Logits tensor of shape (batch_size, seq_len, vocab_size).</p>
+<dd class="field-even"><p>A tuple containing model representations and optional KV cache. The
+representations are vocabulary logits in causal-LM mode and backbone
+hidden states otherwise.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em></p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Any</em> | None]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -511,10 +533,10 @@ routes to generate_from_embeds(), otherwise routes to model.generate().</p></li>
   </svg>
   <span>Back to top</span>
 </button><div class="navigation flex print:hidden"><div class="navigation-prev">
-    <a href="gliner.modeling.base.html">
+    <a href="gliner.modeling.context_encoders.html">
       <i class="i-lucide chevron-left"></i>
       <div class="page-info">
-        <span>Previous</span><div class="title">gliner.modeling.base module</div></div>
+        <span>Previous</span><div class="title">gliner.modeling.context_encoders module</div></div>
     </a>
   </div><div class="navigation-next">
     <a href="gliner.modeling.encoder.html">

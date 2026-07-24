@@ -30,4 +30,5 @@ Submodules
    gliner.config
    gliner.infer_packing
    gliner.model
+   gliner.streaming
    gliner.utils

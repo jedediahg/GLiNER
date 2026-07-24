@@ -1,0 +1,7 @@
+gliner.modeling.context\_encoders module
+========================================
+
+.. automodule:: gliner.modeling.context_encoders
+   :members:
+   :undoc-members:
+   :show-inheritance:
