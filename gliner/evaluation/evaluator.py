@@ -4,6 +4,7 @@ import numpy as np
 import torch
 
 from .utils import _prf_divide, flatten_for_eval, extract_tp_actual_correct
+from ..decoding.decoder import Span
 
 
 class BaseEvaluator(ABC):
