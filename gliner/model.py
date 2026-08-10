@@ -5713,6 +5713,7 @@ class UniEncoderSpanRelexGLiNER(BaseEncoderGLiNER):
         relation_threshold: Optional[float] = None,
         batch_size: int = 12,
         entity_types: Optional[List[str]] = None,
+        relation_types: Optional[List[str]] = None,
     ) -> Tuple[Tuple[Any, float], Tuple[Any, float]]:
         """Evaluate the model on both NER and relation extraction tasks.
 
@@ -5725,6 +5726,7 @@ class UniEncoderSpanRelexGLiNER(BaseEncoderGLiNER):
             relation_threshold: The threshold for relation predictions. Defaults to threshold.
             batch_size: The batch size for evaluation. Defaults to 12.
             entity_types: Optional list of entity types to evaluate. If None, extracts from test data. Defaults to None.
+            relation_types: Optional list of relation types to evaluate. If None, extracts from test data. Defaults to None.
 
         Returns:
             Tuple of ((ner_output, ner_f1), (rel_output, rel_f1)) containing:
@@ -5755,7 +5757,7 @@ class UniEncoderSpanRelexGLiNER(BaseEncoderGLiNER):
         )
 
         def collate_fn(batch):
-            return collator(batch, entity_types=entity_types)
+            return collator(batch, entity_types=entity_types, relation_types=relation_types)
 
         data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
 
