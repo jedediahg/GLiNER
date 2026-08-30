@@ -1,7 +1,7 @@
 import pytest
 
 from gliner import GLiNER
-from gliner.model import BaseEncoderGLiNER, UniEncoderSpanRelexGLiNER
+from gliner.model import BaseEncoderGLiNER, UniEncoderSpanRelexGLiNER, _entity_types_for_chunk
 
 
 class _WordsSplitter:
@@ -77,3 +77,22 @@ def test_relex_prepare_batch_validates_per_text_relation_count():
             [["person"], ["organization"]],
             relations=[["works_at"]],
         )
+
+
+def test_entity_types_for_chunk_slices_per_row_label_sets():
+    """Per-row label sets must follow their rows into each DataLoader chunk.
+
+    The loader hands collate_fn one chunk at a time; without this the decoder indexes the
+    whole-batch list with a chunk-local index and rows past the first chunk are decoded against
+    another row's labels.
+    """
+    per_row = [["a"], ["b"], ["c"], ["d"]]
+    assert _entity_types_for_chunk(per_row, [2, 3]) == [["c"], ["d"]]
+    assert _entity_types_for_chunk(per_row, [0, 1]) == [["a"], ["b"]]
+
+
+def test_entity_types_for_chunk_passes_shared_label_list_through():
+    """A single flat list is shared by every row and must NOT be sliced."""
+    shared = ["person", "organization", "location"]
+    assert _entity_types_for_chunk(shared, [1, 2]) == shared
+    assert _entity_types_for_chunk([], [0]) == []

@@ -286,6 +286,17 @@ class BaseSpanDecoder(BaseDecoder):
                     span_filter[word_start, width] = True
             probs_i = probs_i * span_filter.unsqueeze(-1)
 
+        # Same padding guard as _decode_batch: with per-row label sets this row's scores may span
+        # more class slots than its own label set has.
+        num_classes = probs_i.shape[-1]
+        if len(id_to_class_i) < num_classes:
+            valid_classes = torch.tensor(
+                [class_idx + 1 in id_to_class_i for class_idx in range(num_classes)],
+                dtype=torch.bool,
+                device=probs_i.device,
+            )
+            probs_i = probs_i * valid_classes
+
         span_i = []
 
         # Find all spans above threshold
@@ -408,6 +419,25 @@ class BaseSpanDecoder(BaseDecoder):
                     span_filter[i] = True
             probs = probs * span_filter.unsqueeze(-1)
 
+        # Pre-resolve id_to_class mappings per batch item
+        id_to_class_per_item = [self._get_id_to_class_for_sample(id_to_classes, i) for i in range(B)]
+
+        # With per-row label sets the class dimension is padded to the batch-wide maximum, so a row
+        # with fewer labels carries scores in class slots it never asked for. Mask them out — the
+        # same guard _decode_explicit_spans already applies — or torch.where returns class indices
+        # that are absent from that row's id_to_class and _build_span_tuple raises KeyError.
+        num_classes = probs.shape[-1]
+        if any(len(m) < num_classes for m in id_to_class_per_item):
+            valid_classes = torch.tensor(
+                [
+                    [class_idx + 1 in id_to_class for class_idx in range(num_classes)]
+                    for id_to_class in id_to_class_per_item
+                ],
+                dtype=torch.bool,
+                device=probs.device,
+            )
+            probs = probs * valid_classes[:, None, None, :]
+
         # ONE torch.where on the full (B, L, K, C) tensor
         threshold_tensor = _threshold_compare_tensor(threshold, B, probs.device, probs.dim())
         b_idx, s_idx, k_idx, c_idx = torch.where(probs > threshold_tensor)
@@ -447,9 +477,6 @@ class BaseSpanDecoder(BaseDecoder):
             all_top_probs, all_top_indices = torch.topk(all_prob_vecs, k=top_k, dim=-1)
             top_probs_list = all_top_probs.tolist()
             top_indices_list = all_top_indices.tolist()
-
-        # Pre-resolve id_to_class mappings per batch item
-        id_to_class_per_item = [self._get_id_to_class_for_sample(id_to_classes, i) for i in range(B)]
 
         # Group by batch item and build Span objects (pure Python)
         batch_spans: List[List[Span]] = [[] for _ in range(B)]

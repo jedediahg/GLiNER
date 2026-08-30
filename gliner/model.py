@@ -115,6 +115,19 @@ from .data_processing.collator import (
 )
 from .data_processing.tokenizer import WordsSplitter
 
+
+def _entity_types_for_chunk(entity_types, indices):
+    """Select the label sets belonging to the rows in one DataLoader chunk.
+
+    ``entity_types`` is either a single flat list shared by every row, or -- when ``inference`` is
+    called with ``labels=List[List[str]]`` -- one list per row. Only the per-row form may be
+    sliced; slicing the shared form would silently drop labels.
+    """
+    if entity_types and isinstance(entity_types[0], list):
+        return [entity_types[i] for i in indices]
+    return entity_types
+
+
 if is_module_available("onnxruntime"):
     import onnxruntime as ort
 
@@ -2510,11 +2523,15 @@ class BaseEncoderGLiNER(BaseGLiNER):
 
         collator = self.create_collator()
 
-        def collate_fn(batch):
-            return self.collate_batch(batch, prepared["entity_types"], collator)
+        def collate_fn(indices):
+            return self.collate_batch(
+                [prepared["input_x"][i] for i in indices],
+                _entity_types_for_chunk(prepared["entity_types"], indices),
+                collator,
+            )
 
         data_loader = torch.utils.data.DataLoader(
-            prepared["input_x"],
+            list(range(len(prepared["input_x"]))),
             batch_size=batch_size,
             shuffle=False,
             collate_fn=collate_fn,
@@ -4937,11 +4954,15 @@ class UniEncoderSpanDecoderGLiNER(BaseEncoderGLiNER):
 
         collator = self.create_collator()
 
-        def collate_fn(batch):
-            return self.collate_batch(batch, prepared["entity_types"], collator)
+        def collate_fn(indices):
+            return self.collate_batch(
+                [prepared["input_x"][i] for i in indices],
+                _entity_types_for_chunk(prepared["entity_types"], indices),
+                collator,
+            )
 
         data_loader = torch.utils.data.DataLoader(
-            prepared["input_x"],
+            list(range(len(prepared["input_x"]))),
             batch_size=batch_size,
             shuffle=False,
             collate_fn=collate_fn,
@@ -5485,11 +5506,16 @@ class UniEncoderSpanRelexGLiNER(BaseEncoderGLiNER):
 
         collator = self.create_collator()
 
-        def collate_fn(batch):
-            return self.collate_batch(batch, prepared["entity_types"], collator, prepared["relation_types"])
+        def collate_fn(indices):
+            return self.collate_batch(
+                [prepared["input_x"][i] for i in indices],
+                _entity_types_for_chunk(prepared["entity_types"], indices),
+                collator,
+                prepared["relation_types"],
+            )
 
         data_loader = torch.utils.data.DataLoader(
-            prepared["input_x"],
+            list(range(len(prepared["input_x"]))),
             batch_size=batch_size,
             shuffle=False,
             collate_fn=collate_fn,

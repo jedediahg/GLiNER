@@ -207,6 +207,45 @@ class TestSpanDecoder:
             assert batch_0_types.issubset({'PERSON', 'ORG'})
             assert batch_1_types.issubset({'LOCATION', 'DATE'})
 
+    def test_ragged_per_sample_id_to_classes(self, basic_config, basic_inputs):
+        """Per-sample mappings of DIFFERENT sizes must decode without raising.
+
+        The class dimension is padded to the batch-wide maximum, so a sample with fewer labels
+        still carries scores in class slots it never asked for. Those slots have no entry in that
+        sample's id_to_class and previously raised KeyError.
+        """
+        decoder = SpanDecoder(basic_config)
+
+        # sample 0 has two classes, sample 1 only one -- logits still have C=2
+        id_to_classes_list = [{1: 'PERSON', 2: 'ORG'}, {1: 'LOCATION'}]
+
+        result = decoder.decode(
+            tokens=basic_inputs['tokens'],
+            id_to_classes=id_to_classes_list,
+            model_output=basic_inputs['logits'],
+            threshold=0.5,
+        )
+
+        assert {span.entity_type for span in result[0]}.issubset({'PERSON', 'ORG'})
+        assert {span.entity_type for span in result[1]}.issubset({'LOCATION'})
+
+    def test_ragged_per_sample_id_to_classes_single_item(self, basic_config):
+        """Same guard on the B == 1 path, which decodes per item rather than per batch."""
+        decoder = SpanDecoder(basic_config)
+
+        logits = torch.full((1, 3, 2, 3), -10.0)
+        logits[0, 0, 0, 0] = 5.0   # class 1 -- present in the mapping
+        logits[0, 1, 0, 2] = 5.0   # class 3 -- a padding slot, must be ignored
+
+        result = decoder.decode(
+            tokens=[['Alice', 'met', 'Bob']],
+            id_to_classes=[{1: 'PERSON'}],
+            model_output=logits,
+            threshold=0.5,
+        )
+
+        assert {span.entity_type for span in result[0]} == {'PERSON'}
+
     def test_empty_predictions(self, basic_config):
         """Should handle case with no predictions above threshold."""
         decoder = SpanDecoder(basic_config)
