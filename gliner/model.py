@@ -5778,7 +5778,8 @@ class UniEncoderSpanRelexGLiNER(BaseEncoderGLiNER):
             relation_threshold: The threshold for relation predictions. Defaults to threshold.
             batch_size: The batch size for evaluation. Defaults to 12.
             entity_types: Optional list of entity types to evaluate. If None, extracts from test data. Defaults to None.
-            relation_types: Optional list of relation types to evaluate. If None, extracts from test data. Defaults to None.
+            relation_types: Optional list of relation types to evaluate. If None, extracts from test
+                data. Defaults to None.
 
         Returns:
             Tuple of ((ner_output, ner_f1), (rel_output, rel_f1)) containing:
