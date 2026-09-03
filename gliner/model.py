@@ -5511,7 +5511,7 @@ class UniEncoderSpanRelexGLiNER(BaseEncoderGLiNER):
                 [prepared["input_x"][i] for i in indices],
                 _entity_types_for_chunk(prepared["entity_types"], indices),
                 collator,
-                prepared["relation_types"],
+                _entity_types_for_chunk(prepared["relation_types"], indices),
             )
 
         data_loader = torch.utils.data.DataLoader(

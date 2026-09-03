@@ -1,3 +1,4 @@
+import torch
 import pytest
 
 from gliner import GLiNER
@@ -96,3 +97,61 @@ def test_entity_types_for_chunk_passes_shared_label_list_through():
     shared = ["person", "organization", "location"]
     assert _entity_types_for_chunk(shared, [1, 2]) == shared
     assert _entity_types_for_chunk([], [0]) == []
+
+
+def test_relex_inference_slices_per_row_relation_types_by_chunk():
+    """Every relex DataLoader chunk should receive the relation schemas for its own rows."""
+    model = UniEncoderSpanRelexGLiNER.__new__(UniEncoderSpanRelexGLiNER)
+    torch.nn.Module.__init__(model)
+    model._inference_packing_config = None
+
+    texts = ["zero", "one", "two", "three"]
+    prepared = {
+        "input_x": [{"row": i} for i in range(4)],
+        "entity_types": [[f"entity_{i}"] for i in range(4)],
+        "relation_types": [[f"relation_{i}"] for i in range(4)],
+        "valid_texts": texts,
+        "valid_to_orig_idx": list(range(4)),
+        "start_token_map": [[] for _ in texts],
+        "end_token_map": [[] for _ in texts],
+        "word_input_spans": None,
+        "num_original": 4,
+    }
+    received_types = []
+
+    def prepare_batch(*args, **kwargs):
+        return prepared
+
+    def create_collator():
+        return object()
+
+    def collate_batch(input_x, entity_types, collator, relation_types):
+        received_types.append((entity_types, relation_types))
+        return {"tokens": [[str(item["row"])] for item in input_x]}
+
+    def process_batches(data_loader, *args, **kwargs):
+        batches = list(data_loader)
+        batch_size = sum(len(batch["tokens"]) for batch in batches)
+        return ([[] for _ in range(batch_size)], [[] for _ in range(batch_size)])
+
+    def passthrough(decoded, *args):
+        return decoded
+
+    model.prepare_batch = prepare_batch
+    model.create_collator = create_collator
+    model.collate_batch = collate_batch
+    model._process_batches = process_batches
+    model.map_entities_to_text = passthrough
+    model.map_relations_to_text = passthrough
+
+    model.inference(
+        texts,
+        prepared["entity_types"],
+        relations=prepared["relation_types"],
+        batch_size=2,
+    )
+
+    assert received_types == [
+        ([['entity_0'], ['entity_1']], [['relation_0'], ['relation_1']]),
+        ([['entity_2'], ['entity_3']], [['relation_2'], ['relation_3']]),
+    ]

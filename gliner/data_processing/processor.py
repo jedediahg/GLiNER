@@ -1777,24 +1777,19 @@ class RelationExtractionSpanProcessor(UniEncoderSpanProcessor):
             else:
                 rel_class_to_ids, rel_id_to_classes = make_mapping(relation_types or [])
 
-        if isinstance(class_to_ids, list):
-            batch = [
+        batch = []
+        for i, example in enumerate(batch_list):
+            class_to_id_i = class_to_ids[i] if isinstance(class_to_ids, list) else class_to_ids
+            rel_class_to_id_i = rel_class_to_ids[i] if isinstance(rel_class_to_ids, list) else rel_class_to_ids
+            batch.append(
                 self.preprocess_example(
-                    b["tokenized_text"],
-                    b[key],
-                    class_to_ids[i],
-                    b.get("relations", []),
-                    rel_class_to_ids[i] if isinstance(rel_class_to_ids, list) else rel_class_to_ids,
+                    example["tokenized_text"],
+                    example[key],
+                    class_to_id_i,
+                    example.get("relations", []),
+                    rel_class_to_id_i,
                 )
-                for i, b in enumerate(batch_list)
-            ]
-        else:
-            batch = [
-                self.preprocess_example(
-                    b["tokenized_text"], b[key], class_to_ids, b.get("relations", []), rel_class_to_ids
-                )
-                for b in batch_list
-            ]
+            )
 
         return self.create_batch_dict(batch, class_to_ids, id_to_classes, rel_class_to_ids, rel_id_to_classes)
 

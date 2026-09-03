@@ -1348,6 +1348,31 @@ class TestRelationExtractionSpanProcessor:
         assert result["rel_idx"].shape[0] == 1  # batch size
         assert result["rel_label"].shape[0] == 1
 
+    def test_collate_raw_batch_selects_relation_mapping_per_sample(self, processor):
+        """Shared entity labels and per-sample relation labels should remain independently aligned."""
+        processor.config.augment_data_prob = 0.0
+        batch = [
+            {
+                "tokenized_text": ["Alice", "Acme"],
+                "ner": [(0, 0, "PER"), (1, 1, "ORG")],
+                "relations": [(0, 1, "WORKS_FOR")],
+            },
+            {
+                "tokenized_text": ["Kyiv", "Ukraine"],
+                "ner": [(0, 0, "PER"), (1, 1, "ORG")],
+                "relations": [(0, 1, "LOCATED_IN")],
+            },
+        ]
+
+        result = processor.collate_raw_batch(
+            batch,
+            entity_types=["PER", "ORG"],
+            relation_types=[["WORKS_FOR"], ["LOCATED_IN"]],
+        )
+
+        assert result["rel_label"].tolist() == [[1], [1]]
+        assert result["rel_id_to_classes"] == [{1: "WORKS_FOR"}, {1: "LOCATED_IN"}]
+
     def test_prepare_inputs_with_relations(self, processor):
         """Should add relation tokens to input."""
         texts = [["word1", "word2"]]
