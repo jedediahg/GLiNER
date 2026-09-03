@@ -226,21 +226,30 @@ class BaseSpanDecoder(BaseDecoder):
             Dict[str, float]: Dictionary mapping class names to probabilities,
                 sorted by probability in descending order, containing up to k entries.
         """
-        # Get the actual number of classes (might be less than k)
         num_classes = probs_tensor.shape[0]
-        k = min(k, num_classes)
+        valid_indices = [
+            class_id - 1
+            for class_id in sorted(id_to_class)
+            if 1 <= class_id <= num_classes
+        ]
+        if not valid_indices:
+            return {}
 
-        # Get top-k probabilities and their indices
-        top_probs, top_indices = torch.topk(probs_tensor, k=k, sorted=True)
+        valid_indices_tensor = torch.tensor(valid_indices, dtype=torch.long, device=probs_tensor.device)
+        valid_probs = probs_tensor.index_select(0, valid_indices_tensor)
+        k = min(k, len(valid_indices))
+
+        # Rank only real classes from this sample's mapping. The model output may
+        # include batch-padding slots that must never appear in class_probs.
+        top_probs, top_positions = torch.topk(valid_probs, k=k, sorted=True)
+        top_indices = valid_indices_tensor[top_positions]
 
         # Convert to dict, mapping class names to probabilities
         # Note: class indices are 1-indexed (0 is padding), so we add 1
-        class_probs = {}
-        for idx, prob in zip(top_indices.tolist(), top_probs.tolist()):
-            class_name = id_to_class.get(idx + 1, f"class_{idx}")
-            class_probs[class_name] = prob
-
-        return class_probs
+        return {
+            id_to_class[idx + 1]: prob
+            for idx, prob in zip(top_indices.tolist(), top_probs.tolist())
+        }
 
     @abstractmethod
     def _build_span_tuple(
@@ -324,7 +333,7 @@ class BaseSpanDecoder(BaseDecoder):
         # Same padding guard as _decode_batch: with per-row label sets this row's scores may span
         # more class slots than its own label set has.
         num_classes = probs_i.shape[-1]
-        if len(id_to_class_i) < num_classes:
+        if any(class_idx + 1 not in id_to_class_i for class_idx in range(num_classes)):
             valid_classes = _get_valid_classes_mask(num_classes, id_to_class_i, device)
             probs_i = probs_i.masked_fill(~valid_classes, float("-inf"))
 
@@ -460,7 +469,10 @@ class BaseSpanDecoder(BaseDecoder):
         # same guard _decode_explicit_spans already applies — or torch.where returns class indices
         # that are absent from that row's id_to_class and _build_span_tuple raises KeyError.
         num_classes = probs.shape[-1]
-        if any(len(m) < num_classes for m in id_to_class_per_item):
+        if any(
+            any(class_idx + 1 not in mapping for class_idx in range(num_classes))
+            for mapping in id_to_class_per_item
+        ):
             valid_classes = _get_valid_classes_mask(num_classes, id_to_class_per_item, device)
             probs = probs.masked_fill(~valid_classes[:, None, None, :], float("-inf"))
 
@@ -511,10 +523,11 @@ class BaseSpanDecoder(BaseDecoder):
 
             class_probs = None
             if return_class_probs:
-                class_probs = {}
-                for idx, prob in zip(top_indices_list[j], top_probs_list[j]):
-                    class_name = id_to_class_i.get(idx + 1, f"class_{idx}")
-                    class_probs[class_name] = prob
+                class_probs = {
+                    id_to_class_i[idx + 1]: prob
+                    for idx, prob in zip(top_indices_list[j], top_probs_list[j])
+                    if idx + 1 in id_to_class_i
+                }
 
             span = self._build_span_tuple(s, k, c, flat_idx, score, id_to_class_i, span_label_maps[b], class_probs)
             batch_spans[b].append(span)
@@ -694,6 +707,10 @@ class SpanDecoder(BaseSpanDecoder):
         top_index_rows = None
         if return_class_probs:
             candidate_probabilities = probabilities[batch_indices, span_positions]
+            candidate_probabilities = candidate_probabilities.masked_fill(
+                ~valid_classes[batch_indices],
+                float("-inf"),
+            )
             top_k = min(5, num_classes)
             top_indices = torch.argsort(
                 candidate_probabilities,
@@ -713,11 +730,12 @@ class SpanDecoder(BaseSpanDecoder):
             class_probs = None
             if return_class_probs:
                 class_probs = {
-                    id_to_class.get(index + 1, f"class_{index}"): probability
+                    id_to_class[index + 1]: probability
                     for index, probability in zip(
                         top_index_rows[row_index],
                         top_prob_rows[row_index],
                     )
+                    if index + 1 in id_to_class
                 }
             candidates_by_batch[batch_idx].append(
                 Span(

@@ -2,7 +2,13 @@ import torch
 import pytest
 
 from gliner import GLiNER
-from gliner.model import BaseEncoderGLiNER, UniEncoderSpanRelexGLiNER, _entity_types_for_chunk
+from gliner.model import (
+    BaseEncoderGLiNER,
+    BiEncoderSpanGLiNER,
+    UniEncoderSpanRelexGLiNER,
+    _entity_types_for_chunk,
+)
+from gliner.data_processing import BiEncoderSpanProcessor
 
 
 class _WordsSplitter:
@@ -97,6 +103,71 @@ def test_entity_types_for_chunk_passes_shared_label_list_through():
     shared = ["person", "organization", "location"]
     assert _entity_types_for_chunk(shared, [1, 2]) == shared
     assert _entity_types_for_chunk([], [0]) == []
+
+
+@pytest.mark.parametrize(
+    ("onnx_model", "entity_types", "expected_batch_sizes"),
+    [
+        (False, [["a"], ["b"], ["c"]], [2, 1]),
+        (True, [["a"], ["b"], ["c"]], [1, 1, 1]),
+        (True, [["a"], ["a"], ["a"]], [2, 1]),
+        (True, ["a", "b"], [2, 1]),
+    ],
+)
+def test_biencoder_onnx_uses_singleton_batches_only_for_per_row_labels(
+    onnx_model, entity_types, expected_batch_sizes
+):
+    """Legacy ONNX graphs need singleton chunks because they cannot consume gather metadata."""
+    model = BiEncoderSpanGLiNER.__new__(BiEncoderSpanGLiNER)
+    torch.nn.Module.__init__(model)
+    model.onnx_model = onnx_model
+    model.data_processor = BiEncoderSpanProcessor.__new__(BiEncoderSpanProcessor)
+    model._inference_packing_config = None
+    texts = ["zero", "one", "two"]
+    prepared = {
+        "input_x": [{"row": i} for i in range(3)],
+        "entity_types": entity_types,
+        "valid_texts": texts,
+        "valid_to_orig_idx": list(range(3)),
+        "start_token_map": [[] for _ in texts],
+        "end_token_map": [[] for _ in texts],
+        "word_input_spans": None,
+        "num_original": 3,
+    }
+    observed_batch_sizes = []
+
+    model.prepare_batch = lambda *args, **kwargs: prepared
+    model.create_collator = object
+    model.collate_batch = lambda input_x, labels, collator: {"tokens": input_x}
+
+    def process_batches(data_loader, *args, **kwargs):
+        batches = list(data_loader)
+        observed_batch_sizes.extend(len(batch["tokens"]) for batch in batches)
+        return [[] for _ in range(sum(observed_batch_sizes))]
+
+    def map_entities(decoded, *args):
+        return decoded
+
+    model._process_batches = process_batches
+    model.map_entities_to_text = map_entities
+
+    model.inference(texts, entity_types, batch_size=2)
+
+    assert observed_batch_sizes == expected_batch_sizes
+
+
+def test_onnx_run_batch_rejects_unaligned_per_row_label_layout():
+    """Low-level ONNX batching must fail loudly instead of ignoring gather metadata."""
+    model = BiEncoderSpanGLiNER.__new__(BiEncoderSpanGLiNER)
+    torch.nn.Module.__init__(model)
+    model.onnx_model = True
+    batch = {
+        "input_ids": torch.ones(2, 1, dtype=torch.long),
+        "labels_gather_indices": torch.tensor([[0], [1]]),
+    }
+
+    with pytest.raises(ValueError, match="Batched per-row labels are not supported"):
+        model.run_batch(batch)
 
 
 def test_relex_inference_slices_per_row_relation_types_by_chunk():

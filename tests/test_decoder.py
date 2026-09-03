@@ -247,6 +247,80 @@ class TestSpanDecoder:
 
         assert {span.entity_type for span in result[0]} == {'PERSON'}
 
+    def test_return_class_probs_excludes_padded_classes_single_item(self, basic_config):
+        """The B == 1 path should report probabilities only for mapped classes."""
+        decoder = SpanDecoder(basic_config)
+        logits = torch.tensor([[[[5.0, 10.0, 9.0]]]])
+
+        result = decoder.decode(
+            tokens=[["Alice"]],
+            id_to_classes=[{1: "PERSON"}],
+            model_output=logits,
+            threshold=0.5,
+            return_class_probs=True,
+        )
+
+        assert len(result[0]) == 1
+        assert result[0][0].class_probs == pytest.approx(
+            {"PERSON": torch.sigmoid(torch.tensor(5.0)).item()}
+        )
+
+    def test_return_class_probs_excludes_padded_classes_batched(self, basic_config):
+        """The vectorized path should not expose another row's padded class slots."""
+        decoder = SpanDecoder(basic_config)
+        logits = torch.tensor(
+            [
+                [[[5.0, -1.0, 100.0]]],
+                [[[4.0, 100.0, 100.0]]],
+            ]
+        )
+
+        result = decoder.decode(
+            tokens=[["Alice"], ["Kyiv"]],
+            id_to_classes=[
+                {1: "PERSON", 2: "ORG"},
+                {1: "PLACE"},
+            ],
+            model_output=logits,
+            threshold=0.5,
+            return_class_probs=True,
+        )
+
+        assert len(result[0]) == 1
+        assert len(result[1]) == 1
+        assert result[0][0].class_probs == pytest.approx(
+            {
+                "PERSON": torch.sigmoid(torch.tensor(5.0)).item(),
+                "ORG": torch.sigmoid(torch.tensor(-1.0)).item(),
+            }
+        )
+        assert result[1][0].class_probs == pytest.approx(
+            {"PLACE": torch.sigmoid(torch.tensor(4.0)).item()}
+        )
+
+    def test_return_class_probs_excludes_padded_classes_explicit_spans(self, basic_config):
+        """Explicit-span decoding should rank only classes present in the row mapping."""
+        decoder = SpanDecoder(basic_config)
+        logits = torch.tensor([[[5.0, 4.0, 100.0, 90.0, 80.0, 70.0, 60.0]]])
+
+        result = decoder.decode(
+            tokens=[["Alice"]],
+            id_to_classes=[{1: "PERSON", 2: "ORG"}],
+            model_output=logits,
+            span_idx=torch.tensor([[[0, 0]]]),
+            span_mask=torch.tensor([[True]]),
+            threshold=0.5,
+            return_class_probs=True,
+        )
+
+        assert len(result[0]) == 1
+        assert result[0][0].class_probs == pytest.approx(
+            {
+                "PERSON": torch.sigmoid(torch.tensor(5.0)).item(),
+                "ORG": torch.sigmoid(torch.tensor(4.0)).item(),
+            }
+        )
+
     def test_empty_predictions(self, basic_config):
         """Should handle case with no predictions above threshold."""
         decoder = SpanDecoder(basic_config)
